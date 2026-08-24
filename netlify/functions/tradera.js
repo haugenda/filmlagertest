@@ -9,22 +9,22 @@
 //   TRADERA_APP_KEY
 //   TRADERA_USER_ID       (krävs bara för User/User+Seller-endpoints)
 //   TRADERA_USER_TOKEN    (krävs bara för User/User+Seller-endpoints)
-//
-// Frontend-exempel:
-//   const res = await fetch('/.netlify/functions/tradera?path=/orders');
-//   const orders = await res.json();
 
 const BASE_URL = "https://api.tradera.com/v4";
 
-// Vitlista: bara dessa metod+väg-kombinationer får gå igenom proxyn.
-// Lägg till fler rader allteftersom du bygger ut integrationen - hellre en
-// extra rad än att öppna upp proxyn generellt.
 const ALLOWED = [
   { method: "GET", pattern: /^\/reference-data\/time$/, needsUser: false },
   { method: "GET", pattern: /^\/orders$/, needsUser: true },
   { method: "GET", pattern: /^\/orders\/[\d,]+$/, needsUser: true },
   { method: "GET", pattern: /^\/listings\/seller-items$/, needsUser: true },
   { method: "GET", pattern: /^\/listings\/updated-seller-items$/, needsUser: true },
+
+  // --- Publicera annons ---
+  { method: "GET", pattern: /^\/categories\/\d+\/attribute-definitions$/, needsUser: false },
+  { method: "GET", pattern: /^\/reference-data\/shipping-options(\?.*)?$/, needsUser: false },
+  { method: "POST", pattern: /^\/listings\/items$/, needsUser: true },
+  { method: "POST", pattern: /^\/listings\/items\/\d+\/images$/, needsUser: true },
+  { method: "POST", pattern: /^\/listings\/items\/\d+\/commit$/, needsUser: true },
 ];
 
 exports.handler = async (event) => {
@@ -34,9 +34,12 @@ exports.handler = async (event) => {
       return json(400, { error: "Saknar 'path'-parameter, t.ex. ?path=/orders" });
     }
 
-    const rule = ALLOWED.find(
-      (r) => r.method === event.httpMethod && r.pattern.test(path)
-    );
+    const pathWithoutQuery = path.split("?")[0];
+
+    const rule = ALLOWED.find((r) => {
+      if (r.method !== event.httpMethod) return false;
+      return r.pattern.test(path) || r.pattern.test(pathWithoutQuery);
+    });
     if (!rule) {
       return json(403, { error: `${event.httpMethod} ${path} är inte tillåten i proxyn` });
     }
@@ -54,16 +57,23 @@ exports.handler = async (event) => {
       headers["X-User-Token"] = process.env.TRADERA_USER_TOKEN;
     }
 
-    const traderaRes = await fetch(`${BASE_URL}${path}`, {
-      method: event.httpMethod,
-      headers,
-    });
+    const fetchOptions = { method: event.httpMethod, headers };
 
+    if (event.httpMethod === "POST" || event.httpMethod === "PUT") {
+      headers["Content-Type"] = "application/json";
+      if (event.body) {
+        fetchOptions.body = event.isBase64Encoded
+          ? Buffer.from(event.body, "base64").toString("utf-8")
+          : event.body;
+      }
+    }
+
+    const traderaRes = await fetch(`${BASE_URL}${path}`, fetchOptions);
     const body = await traderaRes.text();
     return {
       statusCode: traderaRes.status,
       headers: { "Content-Type": "application/json" },
-      body,
+      body: body || "{}",
     };
   } catch (err) {
     return json(500, { error: String(err) });
@@ -71,9 +81,5 @@ exports.handler = async (event) => {
 };
 
 function json(statusCode, obj) {
-  return {
-    statusCode,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(obj),
-  };
+  return { statusCode, headers: { "Content-Type": "application/json" }, body: JSON.stringify(obj) };
 }
