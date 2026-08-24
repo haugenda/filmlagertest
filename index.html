@@ -6260,9 +6260,9 @@ window.renderMonthlyStats = (year) => {
         // PUBLICERA PÅ TRADERA
         // ============================================================
 
-        const TRADERA_BOILERPLATE_TEXT = `OBS! Det billigare fraktalternativet gäller bara om du vill ha enbart skivan och omslag, dvs UTAN fodral. Mer info om frakt finns längst ned så läs hela annonsen.
+        const TRADERA_OBS_LINE = `OBS! Det billigare fraktalternativet gäller bara om du vill ha enbart skivan och omslag, dvs UTAN fodral. Mer info om frakt finns längst ned så läs hela annonsen.`;
 
-Alla filmer jag lägger upp fotas av mig så det som finns på bilderna är vad du får. Alla skivor har också undersökts ytligt och är i fint skick om inget annat sägs.
+        const TRADERA_BOILERPLATE_TEXT = `Alla filmer jag lägger upp fotas av mig så det som finns på bilderna är vad du får. Alla skivor har också undersökts ytligt och är i fint skick om inget annat sägs.
 
 FRAKT
 
@@ -6414,6 +6414,8 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
         };
 
         // --- Standardfrakt: inställningar ---
+        const TRADERA_STANDARD_WEIGHT = 1.000; // kg - din valda standardvikt för en vanlig film
+
         window.openShippingSettingsModal = async () => {
             document.getElementById('shipping-settings-modal').classList.replace('hidden', 'flex');
             const list = document.getElementById('shipping-settings-list');
@@ -6424,24 +6426,38 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 const res = await fetch('/.netlify/functions/tradera?path=' + path);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
-                const products = (data.productsPerWeightSpan || []).flatMap(span => span.products || []);
+
+                const spans = data.productsPerWeightSpan || [];
+                const span = spans.find(s => s.weight === TRADERA_STANDARD_WEIGHT) || spans.find(s => s.weight >= TRADERA_STANDARD_WEIGHT) || spans[spans.length - 1];
+                const rawProducts = (span && span.products) || [];
+
+                // Ta bort dubbletter - samma fraktbolag kan förekomma flera gånger
+                // i samma viktklass (olika paketstorlekar till samma pris).
+                const seen = new Set();
+                const products = [];
+                rawProducts.forEach(p => {
+                    if (seen.has(p.shippingProviderId)) return;
+                    seen.add(p.shippingProviderId);
+                    products.push(p);
+                });
+
                 window._traderaShippingProducts = products;
 
                 const existingDefaults = await traderaLoadShippingDefaults();
                 const defaultsMap = new Map((existingDefaults || []).map(d => [d.shippingOptionId, d.cost]));
 
                 if (products.length === 0) {
-                    list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Inga fraktalternativ hittades.</div>`;
+                    list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Inga fraktalternativ hittades för 1 kg.</div>`;
                     return;
                 }
 
                 list.innerHTML = products.map((p, i) => {
-                    const checked = defaultsMap.has(p.shippingOptionId) ? 'checked' : '';
-                    const cost = defaultsMap.get(p.shippingOptionId) ?? '';
+                    const checked = defaultsMap.has(p.shippingProviderId) ? 'checked' : '';
+                    const cost = defaultsMap.has(p.shippingProviderId) ? defaultsMap.get(p.shippingProviderId) : p.price;
                     return `
                         <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
-                            <input type="checkbox" id="ship-check-${i}" data-option-id="${p.shippingOptionId}" ${checked} class="w-4 h-4 accent-purple-500">
-                            <span class="flex-1 text-sm text-gray-300">${escapeHtml(p.name || p.shippingProviderName || ('Alternativ ' + p.shippingOptionId))}</span>
+                            <input type="checkbox" id="ship-check-${i}" ${checked} class="w-4 h-4 accent-purple-500">
+                            <span class="flex-1 text-sm text-gray-300">${escapeHtml(p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId))}</span>
                             <input type="number" id="ship-cost-${i}" value="${cost}" placeholder="kr" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
                         </div>`;
                 }).join('');
@@ -6463,9 +6479,9 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 const costInput = document.getElementById(`ship-cost-${i}`);
                 if (cb && cb.checked) {
                     selections.push({
-                        shippingOptionId: p.shippingOptionId,
+                        shippingOptionId: p.shippingProviderId,
                         cost: parseInt(costInput.value, 10) || 0,
-                        name: p.name || p.shippingProviderName || '',
+                        name: p.shippingProvider || '',
                     });
                 }
             });
@@ -6604,7 +6620,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             let desc = m.tmdbDesc || "";
             const shortMatch = desc.match(/^([^.!?]*[.!?]\s*){1,3}/);
             const shortDesc = shortMatch ? shortMatch[0] : desc;
-            const fullDescription = `Handling:\n${shortDesc}\n\nRegi: ${m.tmdbDirector || 'Okänd'}\nSkådespelare: ${m.tmdbActors || 'Okända'}\nGenre: ${m.tmdbGenres || 'Okänd'}\nSpeltid: ${m.tmdbRuntime || 'Okänd'}\n\n${TRADERA_BOILERPLATE_TEXT}`;
+            const fullDescription = `${TRADERA_OBS_LINE}\n\nHandling:\n${shortDesc}\n\nRegi: ${m.tmdbDirector || 'Okänd'}\nSkådespelare: ${m.tmdbActors || 'Okända'}\nGenre: ${m.tmdbGenres || 'Okänd'}\nSpeltid: ${m.tmdbRuntime || 'Okänd'}\n\n${TRADERA_BOILERPLATE_TEXT}`;
             document.getElementById('publish-description').value = fullDescription;
 
             // Ladda skick + frakt + bilder parallellt
