@@ -1477,9 +1477,14 @@
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="text-xs text-gray-500 px-4 pt-3">Bocka för de fraktsätt du normalt erbjuder och sätt ditt pris för varje. Sparas som förval på alla nya annonser.</p>
+            <p class="text-xs text-gray-500 px-4 pt-3">Bocka för de fraktsätt du normalt erbjuder. Priset för riktiga fraktbolag sätts av Tradera och går inte att ändra - "Annat" är enda alternativet med eget pris.</p>
             <div id="shipping-settings-list" class="p-4 space-y-2 overflow-y-auto flex-1">
                 <div class="text-center text-gray-500 text-sm py-6">Hämtar fraktalternativ...</div>
+            </div>
+            <div class="px-4 pb-2 flex items-center gap-2">
+                <label class="text-xs text-gray-400 flex-1">Emballage-påslag (läggs på fraktpriset)</label>
+                <input type="number" id="shipping-packaging-surcharge" value="3" class="w-16 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
+                <span class="text-xs text-gray-500">kr</span>
             </div>
             <div class="p-4 border-t border-gray-800 shrink-0">
                 <button onclick="window.saveShippingDefaults()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl">Spara som standard</button>
@@ -6438,7 +6443,9 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 window._traderaShippingProducts = products;
 
                 const existingDefaults = await traderaLoadShippingDefaults();
-                const defaultsMap = new Map((existingDefaults || []).map(d => [d.shippingOptionId, d.cost]));
+                const defaultsMap = new Map((existingDefaults.selections || []).map(d => [d.shippingOptionId, d.cost]));
+                const surchargeInput = document.getElementById('shipping-packaging-surcharge');
+                if (surchargeInput) surchargeInput.value = existingDefaults.packagingSurcharge ?? 3;
 
                 if (products.length === 0) {
                     list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Inga fraktalternativ hittades för 1 kg.</div>`;
@@ -6448,11 +6455,33 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 list.innerHTML = products.map((p, i) => {
                     const checked = defaultsMap.has(p.shippingProviderId) ? 'checked' : '';
                     const cost = defaultsMap.has(p.shippingProviderId) ? defaultsMap.get(p.shippingProviderId) : p.price;
+                    const isCustom = p.shippingProviderId === 6; // "Annat" - enda alternativet med eget pris
+                    const displayName = isCustom ? 'Annat' : (p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
+
+                    const di = p.deliveryInformation || {};
+                    const et = di.estimatedDeliveryTime || {};
+                    let deliveryText = '';
+                    if (et.minWeekdays !== undefined) {
+                        deliveryText = et.maxWeekdays && et.maxWeekdays !== et.minWeekdays
+                            ? `${et.minWeekdays}-${et.maxWeekdays} vardagar`
+                            : `${et.minWeekdays} vardagar`;
+                    }
+                    let pickupText = di.mailBoxWithServicePointBackup ? 'Brevlåda' : (di.servicePoint ? 'Utlämningsställe' : '');
+                    const traceText = di.isTraceable ? 'Spårbart' : 'Ej spårbart';
+                    const subParts = isCustom ? ['Eget pris du sätter själv'] : [pickupText, traceText, deliveryText].filter(Boolean);
+
+                    const priceField = isCustom
+                        ? `<input type="number" id="ship-cost-${i}" value="${cost || ''}" placeholder="kr" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700 shrink-0">`
+                        : `<span id="ship-cost-${i}" data-fixed-cost="${cost}" class="w-20 text-right text-sm text-gray-400 shrink-0">${cost} kr</span>`;
+
                     return `
                         <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
-                            <input type="checkbox" id="ship-check-${i}" ${checked} class="w-4 h-4 accent-purple-500">
-                            <span class="flex-1 text-sm text-gray-300">${escapeHtml(p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId))}</span>
-                            <input type="number" id="ship-cost-${i}" value="${cost}" placeholder="kr" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
+                            <input type="checkbox" id="ship-check-${i}" ${checked} class="w-4 h-4 accent-purple-500 shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm text-gray-300">${escapeHtml(displayName)}</div>
+                                <div class="text-[11px] text-gray-500">${escapeHtml(subParts.join(' · '))}</div>
+                            </div>
+                            ${priceField}
                         </div>`;
                 }).join('');
             } catch (e) {
@@ -6470,18 +6499,23 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             const selections = [];
             products.forEach((p, i) => {
                 const cb = document.getElementById(`ship-check-${i}`);
-                const costInput = document.getElementById(`ship-cost-${i}`);
+                const costEl = document.getElementById(`ship-cost-${i}`);
                 if (cb && cb.checked) {
+                    const cost = costEl.tagName === 'INPUT'
+                        ? (parseInt(costEl.value, 10) || 0)
+                        : (parseInt(costEl.dataset.fixedCost, 10) || 0);
                     selections.push({
                         shippingOptionId: p.shippingProviderId,
-                        cost: parseInt(costInput.value, 10) || 0,
-                        name: p.shippingProvider || '',
+                        cost,
+                        name: p.shippingProviderId === 6 ? 'Annat' : (p.shippingProvider || ''),
                     });
                 }
             });
             try {
+                const surcharge = parseInt(document.getElementById('shipping-packaging-surcharge').value, 10) || 0;
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tradera_shipping_defaults'), {
                     selections,
+                    packagingSurcharge: surcharge,
                     updatedAt: Date.now(),
                 });
                 window.showToast('Standardfrakt sparad!', 'success');
@@ -6496,11 +6530,12 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
         async function traderaLoadShippingDefaults() {
             try {
                 const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tradera_shipping_defaults'));
-                if (!snap.exists()) return [];
-                return snap.data().selections || [];
+                if (!snap.exists()) return { selections: [], packagingSurcharge: 3 };
+                const data = snap.data();
+                return { selections: data.selections || [], packagingSurcharge: data.packagingSurcharge ?? 3 };
             } catch (e) {
                 console.error(e);
-                return [];
+                return { selections: [], packagingSurcharge: 3 };
             }
         }
 
@@ -6512,11 +6547,17 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 container.innerHTML = `<div class="text-xs text-amber-400">Inga standardval sparade ännu. Klicka "Ändra standardval" ovan.</div>`;
                 return;
             }
-            container.innerHTML = selections.map((s, i) => `
-                <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
-                    <span class="flex-1 text-sm text-gray-300">${escapeHtml(s.name || 'Frakt ' + s.shippingOptionId)}</span>
-                    <input type="number" onchange="window._publishState.shippingSelections[${i}].cost = parseInt(this.value,10)||0" value="${s.cost}" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
-                </div>`).join('');
+            container.innerHTML = selections.map((s, i) => {
+                const isCustom = s.shippingOptionId === 6;
+                const priceField = isCustom
+                    ? `<input type="number" onchange="window._publishState.shippingSelections[${i}].cost = parseInt(this.value,10)||0" value="${s.cost}" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">`
+                    : `<span class="w-20 text-right text-sm text-gray-400">${s.cost} kr</span>`;
+                return `
+                    <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
+                        <span class="flex-1 text-sm text-gray-300">${escapeHtml(s.name || 'Frakt ' + s.shippingOptionId)}</span>
+                        ${priceField}
+                    </div>`;
+            }).join('');
         };
 
         // --- Skick (condition) per kategori ---
@@ -6619,7 +6660,10 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
             // Ladda skick + frakt + bilder parallellt
             window.loadPublishConditions(catSelect.value);
-            traderaLoadShippingDefaults().then(defaults => window.renderPublishShippingList(defaults));
+            traderaLoadShippingDefaults().then(defaults => {
+                window.renderPublishShippingList(defaults.selections);
+                window._publishState.packagingSurcharge = defaults.packagingSurcharge;
+            });
             window.loadOneDriveImages();
 
             lucide.createIcons();
@@ -6703,7 +6747,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     description: document.getElementById('publish-description').value,
                     shippingOptions: state.shippingSelections.map(s => ({
                         shippingOptionId: s.shippingOptionId,
-                        cost: s.cost,
+                        cost: s.cost + (state.packagingSurcharge || 0),
                     })),
                     acceptedBidderId: 1,
                     itemAttributes: [2], // 2 = Begagnad
