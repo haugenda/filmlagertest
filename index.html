@@ -1397,13 +1397,18 @@
             <div id="publish-modal-body" class="p-4 overflow-y-auto space-y-4 flex-1">
                 <!-- Bilder -->
                 <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Bilder (välj 1-4)</label>
-                        <button onclick="window.connectOneDriveFolder()" class="text-[11px] text-purple-400 hover:text-purple-300 font-bold">Byt mapp</button>
-                    </div>
-                    <div id="publish-image-picker" class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto bg-gray-950 border border-gray-800 rounded-xl p-2">
-                        <div class="col-span-2 text-center text-gray-500 text-sm py-6">Kopplar till din bildmapp...</div>
-                    </div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Bilder (välj 1-4)</label>
+                    <input type="file" id="publish-image-input" accept="image/*" multiple onchange="window.handlePublishImageSelection(event)" class="hidden">
+                    <button onclick="document.getElementById('publish-image-input').click()" class="w-full mt-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 border-dashed text-gray-300 text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+                        <i data-lucide="image-plus" class="w-4 h-4"></i> Välj bilder från din enhet
+                    </button>
+                    <div id="publish-image-picker" class="grid grid-cols-2 gap-2 mt-2"></div>
+                </div>
+
+                <!-- Titel -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Titel</label>
+                    <input type="text" id="publish-title" maxlength="65" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700">
                 </div>
 
                 <!-- Pris -->
@@ -1441,6 +1446,10 @@
                         <button onclick="window.openShippingSettingsModal()" class="text-[11px] text-purple-400 hover:text-purple-300 font-bold">Ändra standardval</button>
                     </div>
                     <div id="publish-shipping-list" class="space-y-1.5"></div>
+                    <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5 mt-1.5">
+                        <input type="checkbox" id="publish-pickup" checked class="w-4 h-4 accent-purple-500">
+                        <label for="publish-pickup" class="text-sm text-gray-300 flex-1">Tillåt avhämtning</label>
+                    </div>
                 </div>
 
                 <!-- Förnyelse -->
@@ -1481,11 +1490,12 @@
             <div id="shipping-settings-list" class="p-4 space-y-2 overflow-y-auto flex-1">
                 <div class="text-center text-gray-500 text-sm py-6">Hämtar fraktalternativ...</div>
             </div>
-            <div class="px-4 pb-2 flex items-center gap-2">
+            <div class="px-4 pb-1 flex items-center gap-2">
                 <label class="text-xs text-gray-400 flex-1">Emballage-påslag (läggs på fraktpriset)</label>
                 <input type="number" id="shipping-packaging-surcharge" value="3" class="w-16 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
                 <span class="text-xs text-gray-500">kr</span>
             </div>
+            <p class="text-[11px] text-gray-600 px-4 pb-3">Gäller inte "Annat" - där är priset du skriver in redan det slutgiltiga.</p>
             <div class="p-4 border-t border-gray-800 shrink-0">
                 <button onclick="window.saveShippingDefaults()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl">Spara som standard</button>
             </div>
@@ -6283,137 +6293,62 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             autoRenew: false,
         };
 
-        // --- IndexedDB: minns vald OneDrive-mapp mellan sessioner ---
-        function traderaIdbOpen() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open('tradera-app-db', 1);
-                req.onupgradeneeded = () => req.result.createObjectStore('handles');
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-        async function traderaIdbSet(key, value) {
-            const db = await traderaIdbOpen();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction('handles', 'readwrite');
-                tx.objectStore('handles').put(value, key);
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
-            });
-        }
-        async function traderaIdbGet(key) {
-            const db = await traderaIdbOpen();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction('handles', 'readonly');
-                const req = tx.objectStore('handles').get(key);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
+        // --- Bildval via enhetens vanliga filhanterare ---
+        window.handlePublishImageSelection = (event) => {
+            const files = Array.from(event.target.files || []).slice(0, 4);
+            if (files.length === 0) return;
 
-        window.connectOneDriveFolder = async () => {
-            if (!window.showDirectoryPicker) {
-                window.showToast('Din webbläsare stödjer inte mappval. Använd Edge eller Chrome.', 'error');
-                return;
-            }
-            try {
-                const handle = await window.showDirectoryPicker();
-                await traderaIdbSet('imageFolder', handle);
-                window._traderaFolderHandle = handle;
-                window.showToast('Mapp kopplad!', 'success');
-                window.loadOneDriveImages();
-            } catch (e) {
-                if (e.name !== 'AbortError') console.error(e);
-            }
-        };
+            window._publishFileList = files.map(file => ({ name: file.name, file }));
+            window._publishState.selectedImages = files.map((f, i) => ({ index: i, name: f.name }));
 
-        async function traderaGetFolderHandle() {
-            if (window._traderaFolderHandle) return window._traderaFolderHandle;
-            try {
-                const handle = await traderaIdbGet('imageFolder');
-                if (!handle) return null;
-                const perm = await handle.queryPermission({ mode: 'read' });
-                if (perm !== 'granted') {
-                    const req = await handle.requestPermission({ mode: 'read' });
-                    if (req !== 'granted') return null;
-                }
-                window._traderaFolderHandle = handle;
-                return handle;
-            } catch (e) {
-                console.error('Kunde inte hämta sparad mapp:', e);
-                return null;
-            }
-        }
-
-        window.loadOneDriveImages = async () => {
             const picker = document.getElementById('publish-image-picker');
-            const handle = await traderaGetFolderHandle();
-            if (!handle) {
-                picker.innerHTML = `<div class="col-span-2 text-center py-6"><button onclick="window.connectOneDriveFolder()" class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold py-2.5 px-4 rounded-xl">Koppla bildmapp</button></div>`;
-                return;
-            }
+            picker.innerHTML = window._publishFileList.map((f, i) => {
+                const url = URL.createObjectURL(f.file);
+                return `
+                    <div class="relative rounded-xl overflow-hidden border-2 border-purple-500">
+                        <img src="${url}" class="w-full h-40 object-cover">
+                        <button onclick="window.removePublishImage(${i})" class="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>`;
+            }).join('');
+            lucide.createIcons();
 
-            picker.innerHTML = `<div class="col-span-2 text-center text-gray-500 text-sm py-6">Läser mapp...</div>`;
-
-            try {
-                const files = [];
-                for await (const [name, entryHandle] of handle.entries()) {
-                    if (entryHandle.kind !== 'file') continue;
-                    if (!/\.(jpe?g|png|webp)$/i.test(name)) continue;
-                    const file = await entryHandle.getFile();
-                    files.push({ name, file });
-                }
-                files.sort((a, b) => b.file.lastModified - a.file.lastModified);
-                const recent = files.slice(0, 40);
-
-                if (recent.length === 0) {
-                    picker.innerHTML = `<div class="col-span-2 text-center text-gray-500 text-sm py-6">Inga bilder hittades i mappen.</div>`;
-                    return;
-                }
-
-                picker.innerHTML = recent.map((f, i) => {
-                    const url = URL.createObjectURL(f.file);
-                    return `
-                        <div class="relative cursor-pointer rounded-xl overflow-hidden border-2 border-gray-800" id="pub-img-${i}" onclick="window.togglePublishImage(${i}, '${escapeJsAttr(f.name)}')">
-                            <img src="${url}" class="w-full h-36 object-cover">
-                            <div class="absolute inset-0 bg-purple-600/40 hidden items-center justify-center" id="pub-img-check-${i}">
-                                <i data-lucide="check-circle" class="w-8 h-8 text-white"></i>
-                            </div>
-                        </div>`;
-                }).join('');
-                window._publishFileList = recent;
-                lucide.createIcons();
-            } catch (e) {
-                console.error(e);
-                picker.innerHTML = `<div class="col-span-2 text-center text-red-400 text-sm py-6">Kunde inte läsa mappen. Prova "Byt mapp".</div>`;
+            if (files.length >= 4) {
+                window.showToast('Max 4 bilder - resten ignorerades', 'info');
             }
         };
 
-        window.togglePublishImage = (index, name) => {
-            const state = window._publishState;
-            const existingIdx = state.selectedImages.findIndex(x => x.index === index);
-            const box = document.getElementById(`pub-img-${index}`);
-            const check = document.getElementById(`pub-img-check-${index}`);
-
-            if (existingIdx > -1) {
-                state.selectedImages.splice(existingIdx, 1);
-                box.classList.remove('border-purple-500');
-                box.classList.add('border-gray-800');
-                check.classList.replace('flex', 'hidden');
-                return;
-            }
-            if (state.selectedImages.length >= 4) {
-                window.showToast('Max 4 bilder', 'error');
-                return;
-            }
-            state.selectedImages.push({ index, name });
-            box.classList.remove('border-gray-800');
-            box.classList.add('border-purple-500');
-            check.classList.replace('hidden', 'flex');
+        window.removePublishImage = (index) => {
+            window._publishFileList.splice(index, 1);
+            window._publishState.selectedImages = window._publishFileList.map((f, i) => ({ index: i, name: f.name }));
+            // Rita om med nya index
+            document.getElementById('publish-image-input').dispatchEvent(new Event('rerender'));
+            const picker = document.getElementById('publish-image-picker');
+            picker.innerHTML = window._publishFileList.map((f, i) => {
+                const url = URL.createObjectURL(f.file);
+                return `
+                    <div class="relative rounded-xl overflow-hidden border-2 border-purple-500">
+                        <img src="${url}" class="w-full h-40 object-cover">
+                        <button onclick="window.removePublishImage(${i})" class="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>`;
+            }).join('');
+            lucide.createIcons();
         };
 
         // --- Standardfrakt: inställningar ---
         const TRADERA_STANDARD_WEIGHT = 1.000; // kg - din valda standardvikt för en vanlig film
+
+        const TRADERA_SHIPPING_NAMES = {
+            'PostNordStamp': 'PostNord Frimärke (brevlåda)',
+            'PostNordParcel': 'PostNord Paket',
+            'DHL': 'DHL Paket',
+            'DHLExpress': 'DHL Express',
+            'SchenkerPrivpak': 'DB Schenker Privatpaket',
+            'Instabox': 'Instabox (paketskåp)',
+        };
 
         window.openShippingSettingsModal = async () => {
             document.getElementById('shipping-settings-modal').classList.replace('hidden', 'flex');
@@ -6456,7 +6391,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     const checked = defaultsMap.has(p.shippingProviderId) ? 'checked' : '';
                     const cost = defaultsMap.has(p.shippingProviderId) ? defaultsMap.get(p.shippingProviderId) : p.price;
                     const isCustom = p.shippingProviderId === 6; // "Annat" - enda alternativet med eget pris
-                    const displayName = isCustom ? 'Annat' : (p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
+                    const displayName = isCustom ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
 
                     const di = p.deliveryInformation || {};
                     const et = di.estimatedDeliveryTime || {};
@@ -6507,7 +6442,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     selections.push({
                         shippingOptionId: p.shippingProviderId,
                         cost,
-                        name: p.shippingProviderId === 6 ? 'Annat' : (p.shippingProvider || ''),
+                        name: p.shippingProviderId === 6 ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ''),
                     });
                 }
             });
@@ -6643,6 +6578,13 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             document.getElementById('publish-price-history').classList.add('hidden');
             window.setPublishAutoRenew(false);
 
+            // Titel: TITEL (ÅR) - FORMAT, redigerbar
+            const rawTitle = (getExactData(m, 'FILMER') || 'Okänd titel').toUpperCase();
+            const year = getExactData(m, 'ÅR') || '';
+            const formatRaw = (getExactData(m, 'MEDIAFORMAT') || 'DVD').toUpperCase();
+            const builtTitle = year ? `${rawTitle} (${year}) - ${formatRaw}` : `${rawTitle} - ${formatRaw}`;
+            document.getElementById('publish-title').value = builtTitle.slice(0, 65);
+
             // Kategori: förvälj utifrån filmens mediaformat
             const format = (getExactData(m, 'MEDIAFORMAT') || 'DVD').toLowerCase();
             const catSelect = document.getElementById('publish-category');
@@ -6655,16 +6597,21 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             let desc = m.tmdbDesc || "";
             const shortMatch = desc.match(/^([^.!?]*[.!?]\s*){1,3}/);
             const shortDesc = shortMatch ? shortMatch[0] : desc;
-            const fullDescription = `${TRADERA_OBS_LINE}\n\nHandling:\n${shortDesc}\n\nRegi: ${m.tmdbDirector || 'Okänd'}\nSkådespelare: ${m.tmdbActors || 'Okända'}\nGenre: ${m.tmdbGenres || 'Okänd'}\nSpeltid: ${m.tmdbRuntime || 'Okänd'}\n\n${TRADERA_BOILERPLATE_TEXT}`;
+            const fullDescription = `${TRADERA_OBS_LINE}\n\nHandling:\n${shortDesc}\n\nRegi: ${m.tmdbDirector || 'Okänd'}\nSkådespelare: ${m.tmdbActors || 'Okända'}\nGenre: ${m.tmdbGenres || 'Okänd'}\nSpeltid: ${m.tmdbRuntime || 'Okänd'}\nSvensk text.\n\n${TRADERA_BOILERPLATE_TEXT}`;
             document.getElementById('publish-description').value = fullDescription;
 
-            // Ladda skick + frakt + bilder parallellt
+            // Ladda skick + frakt parallellt
             window.loadPublishConditions(catSelect.value);
             traderaLoadShippingDefaults().then(defaults => {
                 window.renderPublishShippingList(defaults.selections);
                 window._publishState.packagingSurcharge = defaults.packagingSurcharge;
             });
-            window.loadOneDriveImages();
+
+            // Rensa bildväljaren
+            document.getElementById('publish-image-picker').innerHTML = '';
+            document.getElementById('publish-image-input').value = '';
+            document.getElementById('publish-pickup').checked = true;
+            window._publishFileList = [];
 
             lucide.createIcons();
         };
@@ -6708,10 +6655,26 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
         }
 
         // --- Själva publiceringen: skapa -> ladda upp bilder -> committa ---
+        function traderaErrorMessage(data, fallback) {
+            if (!data) return fallback;
+            const err = data.error ?? data.validationError ?? data;
+            if (typeof err === 'string') return err;
+            if (err && typeof err === 'object') {
+                return err.message || err.code || JSON.stringify(err);
+            }
+            return fallback;
+        }
+
         window.submitPublishToTradera = async () => {
             const state = window._publishState;
             const m = movies.find(x => x.id === state.movieId);
             if (!m) return;
+
+            const titleValue = document.getElementById('publish-title').value.trim();
+            if (!titleValue) {
+                setPublishStatus('Fyll i en titel.', 'error');
+                return;
+            }
 
             const price = parseInt(document.getElementById('publish-price').value, 10);
             if (!price || price <= 0) {
@@ -6738,20 +6701,21 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
             try {
                 const itemRequest = {
-                    title: (getExactData(m, 'FILMER') || 'Okänd titel').slice(0, 65),
+                    title: (document.getElementById('publish-title').value || 'Okänd titel').slice(0, 65),
                     categoryId: parseInt(document.getElementById('publish-category').value, 10),
                     duration: 60,
-                    restarts: 0,
+                    restarts: state.autoRenew ? 2 : 0,
                     buyItNowPrice: price,
                     itemType: 3,
                     description: document.getElementById('publish-description').value,
                     shippingOptions: state.shippingSelections.map(s => ({
                         shippingOptionId: s.shippingOptionId,
-                        cost: s.cost + (state.packagingSurcharge || 0),
+                        cost: s.cost + (s.shippingOptionId === 6 ? 0 : (state.packagingSurcharge || 0)),
                     })),
                     acceptedBidderId: 1,
                     itemAttributes: [2], // 2 = Begagnad
                     autoCommit: false,
+                    shippingTakeaway: document.getElementById('publish-pickup').checked, // OBS: gissat fältnamn, testas
                     attributeValues: {
                         terms: state.conditionDefinitionId ? [{ id: state.conditionDefinitionId, values: [conditionValue] }] : [],
                     },
@@ -6764,7 +6728,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 });
                 const createData = await createRes.json();
                 if (!createRes.ok) {
-                    throw new Error(createData?.error || createData?.validationError || ('HTTP ' + createRes.status));
+                    throw new Error(traderaErrorMessage(createData, 'HTTP ' + createRes.status));
                 }
                 const requestId = createData.requestId || createData.itemId || createData.id;
                 if (!requestId) {
@@ -6787,7 +6751,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     });
                     if (!imgRes.ok) {
                         const errData = await imgRes.json().catch(() => ({}));
-                        throw new Error('Kunde inte ladda upp bild ' + fileEntry.name + ': ' + (errData?.error || imgRes.status));
+                        throw new Error('Kunde inte ladda upp bild ' + fileEntry.name + ': ' + traderaErrorMessage(errData, imgRes.status));
                     }
                 }
 
@@ -6798,7 +6762,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 });
                 if (!commitRes.ok) {
                     const errData = await commitRes.json().catch(() => ({}));
-                    throw new Error(errData?.error || ('HTTP ' + commitRes.status));
+                    throw new Error(traderaErrorMessage(errData, 'HTTP ' + commitRes.status));
                 }
 
                 await updateDoc(doc(moviesCollection, m.id), {
