@@ -6689,6 +6689,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 setPublishStatus('Välj minst ett fraktalternativ (Ändra standardval).', 'error');
                 return;
             }
+            const wantsPickup = document.getElementById('publish-pickup').checked;
             const conditionValue = document.getElementById('publish-condition').value;
             if (!conditionValue) {
                 setPublishStatus('Välj skick.', 'error');
@@ -6700,6 +6701,14 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             setPublishStatus('Skapar annons-utkast hos Tradera...', 'info');
 
             try {
+                const shippingOptionsPayload = state.shippingSelections.map(s => ({
+                    shippingOptionId: s.shippingOptionId,
+                    cost: s.cost + (s.shippingOptionId === 6 ? 0 : (state.packagingSurcharge || 0)),
+                }));
+                if (wantsPickup) {
+                    shippingOptionsPayload.push({ shippingOptionId: 8, cost: 0 }); // Avhämtning
+                }
+
                 const itemRequest = {
                     title: (document.getElementById('publish-title').value || 'Okänd titel').slice(0, 65),
                     categoryId: parseInt(document.getElementById('publish-category').value, 10),
@@ -6708,14 +6717,10 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     buyItNowPrice: price,
                     itemType: 3,
                     description: document.getElementById('publish-description').value,
-                    shippingOptions: state.shippingSelections.map(s => ({
-                        shippingOptionId: s.shippingOptionId,
-                        cost: s.cost + (s.shippingOptionId === 6 ? 0 : (state.packagingSurcharge || 0)),
-                    })),
+                    shippingOptions: shippingOptionsPayload,
                     acceptedBidderId: 1,
                     itemAttributes: [2], // 2 = Begagnad
                     autoCommit: false,
-                    shippingTakeaway: document.getElementById('publish-pickup').checked, // OBS: gissat fältnamn, testas
                     attributeValues: {
                         terms: state.conditionDefinitionId ? [{ id: state.conditionDefinitionId, values: [conditionValue] }] : [],
                     },
