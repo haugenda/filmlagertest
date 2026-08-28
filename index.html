@@ -646,6 +646,14 @@
                 <span id="pkg-low-stock-badge" class="hidden bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">Snart slut</span>
                 <i data-lucide="chevron-right" class="text-gray-600 group-hover:text-white transition-colors w-4 h-4"></i>
             </div>
+
+            <div onclick="window.openShippingSettingsModal()" class="bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-3 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
+                <div class="bg-purple-500/10 p-2 rounded-lg"><i data-lucide="truck" class="w-5 h-5 text-purple-400"></i></div>
+                <div class="flex-1 text-left">
+                    <h4 class="font-bold text-white text-sm leading-tight mb-0.5">Fraktinställningar</h4>
+                </div>
+                <i data-lucide="chevron-right" class="text-gray-600 group-hover:text-white transition-colors w-4 h-4"></i>
+            </div>
             
             <button onclick="window.openShelfModal()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-3 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
                 <div class="bg-blue-500/10 p-2 rounded-lg"><i data-lucide="archive" class="w-5 h-5 text-blue-400"></i></div>
@@ -1436,6 +1444,16 @@
                         <option value="1301">DVD</option>
                         <option value="302602">Blu-ray</option>
                         <option value="1001255">4K UHD</option>
+                    </select>
+                </div>
+
+                <!-- Köparregion -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Vem får köpa</label>
+                    <select id="publish-region" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700">
+                        <option value="4" selected>EU</option>
+                        <option value="1">Endast Sverige</option>
+                        <option value="3">Internationellt</option>
                     </select>
                 </div>
 
@@ -6718,7 +6736,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     itemType: 3,
                     description: document.getElementById('publish-description').value,
                     shippingOptions: shippingOptionsPayload,
-                    acceptedBidderId: 1,
+                    acceptedBidderId: parseInt(document.getElementById('publish-region').value, 10),
                     itemAttributes: [2], // 2 = Begagnad
                     autoCommit: false,
                     attributeValues: {
