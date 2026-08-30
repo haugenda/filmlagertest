@@ -237,7 +237,7 @@
                     <button onclick="window.copyPackageAdText()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-full py-3.5 px-5 shadow-lg border border-gray-700 font-bold flex items-center gap-2">
                         <i data-lucide="copy" class="w-5 h-5"></i> Text
                     </button>
-                    <button onclick="window.publishBuiltPackage()" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full py-3.5 px-5 shadow-[0_4px_20px_rgba(147,51,234,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center border border-purple-400/30 font-bold gap-2">
+                    <button onclick="window.openPkgPublishModal()" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full py-3.5 px-5 shadow-[0_4px_20px_rgba(147,51,234,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center border border-purple-400/30 font-bold gap-2">
                         <i data-lucide="upload-cloud" class="w-5 h-5"></i> Tradera (<span id="package-build-count">0</span>)
                     </button>
                 </div>
@@ -1416,7 +1416,7 @@
                 <!-- Titel -->
                 <div>
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Titel</label>
-                    <input type="text" id="publish-title" maxlength="65" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700">
+                    <input type="text" id="publish-title" maxlength="65" placeholder="Skrivs in automatiskt för en film, annars fyller du i själv" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700">
                 </div>
 
                 <!-- Pris -->
@@ -1424,7 +1424,7 @@
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Pris (kr)</label>
                     <div class="flex gap-2 mt-1">
                         <input type="number" id="publish-price" class="flex-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700" placeholder="0">
-                        <button onclick="window.checkOwnPriceHistory()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 rounded-xl text-xs font-bold whitespace-nowrap">Kolla tidigare pris</button>
+                        <button id="publish-price-history-btn" onclick="window.checkOwnPriceHistory()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 rounded-xl text-xs font-bold whitespace-nowrap">Kolla tidigare pris</button>
                     </div>
                     <div id="publish-price-history" class="mt-2 text-xs text-gray-400 hidden"></div>
                 </div>
@@ -1461,7 +1461,25 @@
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Frakt</label>
-                        <button onclick="window.openShippingSettingsModal()" class="text-[11px] text-purple-400 hover:text-purple-300 font-bold">Ändra standardval</button>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="text-xs text-gray-400 whitespace-nowrap">Vikt</label>
+                        <select id="publish-weight" onchange="window.onPublishWeightChange()" class="flex-1 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
+                            <option value="0.05">50 g</option>
+                            <option value="0.1">100 g</option>
+                            <option value="0.25">250 g</option>
+                            <option value="0.5">500 g</option>
+                            <option value="1" selected>1 kg</option>
+                            <option value="2">2 kg</option>
+                            <option value="3">3 kg</option>
+                            <option value="5">5 kg</option>
+                            <option value="7">7 kg</option>
+                            <option value="9">9 kg</option>
+                            <option value="10">10 kg</option>
+                            <option value="12">12 kg</option>
+                            <option value="15">15 kg</option>
+                            <option value="20">20 kg</option>
+                        </select>
                     </div>
                     <div id="publish-shipping-list" class="space-y-1.5"></div>
                     <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5 mt-1.5">
@@ -6368,31 +6386,35 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             'Instabox': 'Instabox (paketskåp)',
         };
 
+        async function traderaFetchShippingProductsForWeight(categoryId, weightKg) {
+            const path = encodeURIComponent(`/reference-data/shipping-options?fromCountryCodes=SE&categoryIds=${categoryId}`);
+            const res = await fetch('/.netlify/functions/tradera?path=' + path);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+
+            const spans = data.productsPerWeightSpan || [];
+            const span = spans.find(s => s.weight === weightKg) || spans.find(s => s.weight >= weightKg) || spans[spans.length - 1];
+            const rawProducts = (span && span.products) || [];
+
+            // Ta bort dubbletter - samma fraktbolag kan förekomma flera gånger
+            // i samma viktklass (olika paketstorlekar till samma pris).
+            const seen = new Set();
+            const products = [];
+            rawProducts.forEach(p => {
+                if (seen.has(p.shippingProviderId)) return;
+                seen.add(p.shippingProviderId);
+                products.push(p);
+            });
+            return products;
+        }
+
         window.openShippingSettingsModal = async () => {
             document.getElementById('shipping-settings-modal').classList.replace('hidden', 'flex');
             const list = document.getElementById('shipping-settings-list');
             list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Hämtar fraktalternativ...</div>`;
             try {
                 const catId = document.getElementById('publish-category')?.value || '1301';
-                const path = encodeURIComponent(`/reference-data/shipping-options?fromCountryCodes=SE&categoryIds=${catId}`);
-                const res = await fetch('/.netlify/functions/tradera?path=' + path);
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-
-                const spans = data.productsPerWeightSpan || [];
-                const span = spans.find(s => s.weight === TRADERA_STANDARD_WEIGHT) || spans.find(s => s.weight >= TRADERA_STANDARD_WEIGHT) || spans[spans.length - 1];
-                const rawProducts = (span && span.products) || [];
-
-                // Ta bort dubbletter - samma fraktbolag kan förekomma flera gånger
-                // i samma viktklass (olika paketstorlekar till samma pris).
-                const seen = new Set();
-                const products = [];
-                rawProducts.forEach(p => {
-                    if (seen.has(p.shippingProviderId)) return;
-                    seen.add(p.shippingProviderId);
-                    products.push(p);
-                });
-
+                const products = await traderaFetchShippingProductsForWeight(catId, TRADERA_STANDARD_WEIGHT);
                 window._traderaShippingProducts = products;
 
                 const existingDefaults = await traderaLoadShippingDefaults();
@@ -6519,7 +6541,35 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
         window.onPublishCategoryChange = async () => {
             const catId = document.getElementById('publish-category').value;
             await window.loadPublishConditions(catId);
-            window.openShippingSettingsModal === window.openShippingSettingsModal; // no-op, kategori styr bara skick här
+            await window.onPublishWeightChange();
+        };
+
+        window.onPublishWeightChange = async () => {
+            const catId = document.getElementById('publish-category').value;
+            const weight = parseFloat(document.getElementById('publish-weight').value);
+            const container = document.getElementById('publish-shipping-list');
+            container.innerHTML = `<div class="text-center text-gray-500 text-sm py-4">Hämtar fraktpriser för den vikten...</div>`;
+
+            try {
+                const products = await traderaFetchShippingProductsForWeight(catId, weight);
+                const priceByProvider = new Map(products.map(p => [p.shippingProviderId, p.price]));
+
+                const defaults = await traderaLoadShippingDefaults();
+                window._publishState.packagingSurcharge = defaults.packagingSurcharge;
+
+                const selections = (defaults.selections || [])
+                    .filter(s => s.shippingOptionId === 6 || priceByProvider.has(s.shippingOptionId))
+                    .map(s => ({
+                        shippingOptionId: s.shippingOptionId,
+                        cost: s.shippingOptionId === 6 ? s.cost : priceByProvider.get(s.shippingOptionId),
+                        name: s.name,
+                    }));
+
+                window.renderPublishShippingList(selections);
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = `<div class="text-center text-red-400 text-sm py-4">Kunde inte hämta fraktpriser för den vikten.</div>`;
+            }
         };
 
         window.loadPublishConditions = async (categoryId) => {
@@ -6555,7 +6605,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
         // --- Egen prishistorik ---
         window.checkOwnPriceHistory = () => {
-            const m = movies.find(x => x.id === window._publishState.movieId);
+            const m = movies.find(x => x.id === window._publishState.movieIds[0]);
             if (!m) return;
             const title = getExactData(m, 'FILMER');
             const norm = String(title || '').trim().toLowerCase();
@@ -6578,15 +6628,17 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
         };
 
         // --- Öppna/stäng modal ---
-        window.openPublishModal = async (movieId) => {
-            const m = movies.find(x => x.id === movieId);
-            if (!m) return;
+        window.openPublishModal = async (movieIdOrIds) => {
+            const movieIds = Array.isArray(movieIdOrIds) ? movieIdOrIds : [movieIdOrIds];
+            const selected = movies.filter(m => movieIds.includes(m.id));
+            if (selected.length === 0) return;
 
             window._publishState = {
-                movieId,
+                movieIds,
                 selectedImages: [],
                 conditionDefinitionId: null,
                 shippingSelections: [],
+                packagingSurcharge: 0,
                 autoRenew: false,
             };
 
@@ -6595,35 +6647,48 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             document.getElementById('publish-price').value = '';
             document.getElementById('publish-price-history').classList.add('hidden');
             window.setPublishAutoRenew(false);
+            document.getElementById('publish-weight').value = '1';
 
-            // Titel: TITEL (ÅR) - FORMAT, redigerbar
-            const rawTitle = (getExactData(m, 'FILMER') || 'Okänd titel').toUpperCase();
-            const year = getExactData(m, 'ÅR') || '';
-            const formatRaw = (getExactData(m, 'MEDIAFORMAT') || 'DVD').toUpperCase();
-            const builtTitle = year ? `${rawTitle} (${year}) - ${formatRaw}` : `${rawTitle} - ${formatRaw}`;
-            document.getElementById('publish-title').value = builtTitle.slice(0, 65);
+            const isSingle = selected.length === 1;
+            document.getElementById('publish-price-history-btn').classList.toggle('hidden', !isSingle);
 
-            // Kategori: förvälj utifrån filmens mediaformat
-            const format = (getExactData(m, 'MEDIAFORMAT') || 'DVD').toLowerCase();
+            if (isSingle) {
+                const m = selected[0];
+                // Titel: TITEL (ÅR) - FORMAT, redigerbar
+                const rawTitle = (getExactData(m, 'FILMER') || 'Okänd titel').toUpperCase();
+                const year = getExactData(m, 'ÅR') || '';
+                const formatRaw = (getExactData(m, 'MEDIAFORMAT') || 'DVD').toUpperCase();
+                const builtTitle = year ? `${rawTitle} (${year}) - ${formatRaw}` : `${rawTitle} - ${formatRaw}`;
+                document.getElementById('publish-title').value = builtTitle.slice(0, 65);
+
+                // Beskrivning: TMDB-data + fast text
+                if (!m.tmdbFetched) await window.loadTMDBData(m);
+                let desc = m.tmdbDesc || "";
+                const shortMatch = desc.match(/^([^.!?]*[.!?]\s*){1,3}/);
+                const shortDesc = shortMatch ? shortMatch[0] : desc;
+                document.getElementById('publish-description').value = `${TRADERA_OBS_LINE}\n\nHandling:\n${shortDesc}\n\nRegi: ${m.tmdbDirector || 'Okänd'}\nSkådespelare: ${m.tmdbActors || 'Okända'}\nGenre: ${m.tmdbGenres || 'Okänd'}\nSpeltid: ${m.tmdbRuntime || 'Okänd'}\nSvensk text.\n\n${TRADERA_BOILERPLATE_TEXT}`;
+            } else {
+                // Flera filmer: tom titel (fylls i manuellt), lista-beskrivning
+                document.getElementById('publish-title').value = '';
+
+                const titles = selected.map(m => {
+                    const t = getExactData(m, 'FILMER') || 'Okänd';
+                    const y = getExactData(m, 'ÅR') || '';
+                    return y ? `${t} (${y})` : t;
+                }).join(',\n- ');
+                const listText = `Detta är ett filmpaket med ${selected.length} st titlar.\n\nFilmerna som ingår är:\n- ${titles}`;
+                document.getElementById('publish-description').value = `${listText}\n\n${TRADERA_BOILERPLATE_TEXT}`;
+            }
+
+            // Kategori: förvälj utifrån första filmens mediaformat
+            const format = (getExactData(selected[0], 'MEDIAFORMAT') || 'DVD').toLowerCase();
             const catSelect = document.getElementById('publish-category');
             if (format.includes('4k')) catSelect.value = '1001255';
             else if (format.includes('blu')) catSelect.value = '302602';
             else catSelect.value = '1301';
 
-            // Beskrivning: TMDB-data + fast text
-            if (!m.tmdbFetched) await window.loadTMDBData(m);
-            let desc = m.tmdbDesc || "";
-            const shortMatch = desc.match(/^([^.!?]*[.!?]\s*){1,3}/);
-            const shortDesc = shortMatch ? shortMatch[0] : desc;
-            const fullDescription = `${TRADERA_OBS_LINE}\n\nHandling:\n${shortDesc}\n\nRegi: ${m.tmdbDirector || 'Okänd'}\nSkådespelare: ${m.tmdbActors || 'Okända'}\nGenre: ${m.tmdbGenres || 'Okänd'}\nSpeltid: ${m.tmdbRuntime || 'Okänd'}\nSvensk text.\n\n${TRADERA_BOILERPLATE_TEXT}`;
-            document.getElementById('publish-description').value = fullDescription;
-
-            // Ladda skick + frakt parallellt
             window.loadPublishConditions(catSelect.value);
-            traderaLoadShippingDefaults().then(defaults => {
-                window.renderPublishShippingList(defaults.selections);
-                window._publishState.packagingSurcharge = defaults.packagingSurcharge;
-            });
+            window.onPublishWeightChange();
 
             // Rensa bildväljaren
             document.getElementById('publish-image-picker').innerHTML = '';
@@ -6632,6 +6697,15 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             window._publishFileList = [];
 
             lucide.createIcons();
+        };
+
+        window.openPkgPublishModal = () => {
+            const ids = Array.from(selectedPackageIds);
+            if (ids.length === 0) {
+                window.showToast('Välj minst en film i paketet först', 'error');
+                return;
+            }
+            window.openPublishModal(ids);
         };
 
         window.closePublishModal = () => {
@@ -6685,8 +6759,8 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
         window.submitPublishToTradera = async () => {
             const state = window._publishState;
-            const m = movies.find(x => x.id === state.movieId);
-            if (!m) return;
+            const selected = movies.filter(m => state.movieIds.includes(m.id));
+            if (selected.length === 0) return;
 
             const titleValue = document.getElementById('publish-title').value.trim();
             if (!titleValue) {
@@ -6788,19 +6862,30 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     throw new Error(traderaErrorMessage(errData, 'HTTP ' + commitRes.status));
                 }
 
-                await updateDoc(doc(moviesCollection, m.id), {
-                    'ANNONS?': 'TRUE',
-                    annonsDate: Date.now(),
-                    expiryAlerted: deleteField(),
-                    traderaItemId: requestId,
-                    traderaAutoRenew: state.autoRenew,
+                const batch = writeBatch(db);
+                const isPackage = selected.length > 1;
+                const paketId = isPackage ? 'PKG_' + Date.now() : deleteField();
+                selected.forEach(m => {
+                    batch.update(doc(moviesCollection, m.id), {
+                        'ANNONS?': 'TRUE',
+                        paketId: paketId,
+                        annonsDate: Date.now(),
+                        expiryAlerted: deleteField(),
+                        traderaItemId: requestId,
+                        traderaAutoRenew: state.autoRenew,
+                    });
                 });
+                await batch.commit();
 
-                setPublishStatus('Klart! Annonsen är publicerad på Tradera.', 'success');
-                window.showToast('Annonsen är publicerad!', 'success');
+                setPublishStatus(isPackage ? 'Klart! Paketet är publicerat på Tradera.' : 'Klart! Annonsen är publicerad på Tradera.', 'success');
+                window.showToast(isPackage ? 'Paketet är publicerat!' : 'Annonsen är publicerad!', 'success');
                 setTimeout(() => {
                     window.closePublishModal();
-                    window.openDetails(m.id, cameFromStats);
+                    if (isPackage) {
+                        if (window.clearSellBasket) window.clearSellBasket();
+                    } else {
+                        window.openDetails(selected[0].id, cameFromStats);
+                    }
                 }, 1200);
             } catch (e) {
                 console.error(e);
