@@ -3908,14 +3908,16 @@
             if (!m || !m.traderaItemId) return;
             try {
                 const res = await fetch(`/.netlify/functions/tradera?path=/items/${m.traderaItemId}/restarts`);
+                const bodyText = await res.text();
+                let data = {};
+                try { data = bodyText ? JSON.parse(bodyText) : {}; } catch (e) { /* tomt eller ej-JSON svar */ }
+
                 if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(traderaErrorMessage(errData, 'HTTP ' + res.status));
+                    throw new Error(traderaErrorMessage(data, 'HTTP ' + res.status));
                 }
-                const data = await res.json();
                 const newId = data.lastRestartedItemId;
                 if (!newId || newId === m.traderaItemId) {
-                    window.showToast('Ingen förnyelse hittades för den här annonsen - kolla manuellt på Tradera.', 'error');
+                    window.showToast('Traderas svar kändes inte igen (troligen fel sparat ID från start, inte en förnyelse) - länka om filmen manuellt via "Länka till film" istället.', 'error');
                     return;
                 }
                 await updateDoc(doc(moviesCollection, m.id), { traderaItemId: newId });
@@ -7184,10 +7186,17 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 const commitRes = await fetch(`/.netlify/functions/tradera?path=/listings/items/${requestId}/commit`, {
                     method: 'POST',
                 });
+                const commitBodyText = await commitRes.text();
+                let commitData = {};
+                try { commitData = commitBodyText ? JSON.parse(commitBodyText) : {}; } catch (e) { /* tomt eller ej-JSON svar, ok */ }
+
                 if (!commitRes.ok) {
-                    const errData = await commitRes.json().catch(() => ({}));
-                    throw new Error(traderaErrorMessage(errData, 'HTTP ' + commitRes.status));
+                    throw new Error(traderaErrorMessage(commitData, 'HTTP ' + commitRes.status));
                 }
+
+                // Det slutgiltiga annons-ID:t kan skilja sig från utkasts-ID:t (requestId) -
+                // använd det riktiga ID:t från commit-svaret om det finns, annars requestId som reserv.
+                const finalItemId = commitData.itemId || commitData.id || requestId;
 
                 const batch = writeBatch(db);
                 const isPackage = selected.length > 1;
@@ -7198,7 +7207,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                         paketId: paketId,
                         annonsDate: Date.now(),
                         expiryAlerted: deleteField(),
-                        traderaItemId: requestId,
+                        traderaItemId: finalItemId,
                         traderaAutoRenew: state.autoRenew,
                     });
                 });
