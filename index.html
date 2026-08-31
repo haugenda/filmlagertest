@@ -1523,6 +1523,25 @@
                 </button>
             </div>
             <p class="text-xs text-gray-500 px-4 pt-3">Bocka för de fraktsätt du normalt erbjuder. Priset för riktiga fraktbolag sätts av Tradera och går inte att ändra - "Annat" är enda alternativet med eget pris.</p>
+            <div class="px-4 pt-3 flex items-center gap-2">
+                <label class="text-xs text-gray-400 whitespace-nowrap">Standardvikt</label>
+                <select id="shipping-settings-weight" onchange="window.onShippingSettingsWeightChange()" class="flex-1 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">
+                    <option value="0.05">50 g</option>
+                    <option value="0.1">100 g</option>
+                    <option value="0.25">250 g</option>
+                    <option value="0.5">500 g</option>
+                    <option value="1" selected>1 kg</option>
+                    <option value="2">2 kg</option>
+                    <option value="3">3 kg</option>
+                    <option value="5">5 kg</option>
+                    <option value="7">7 kg</option>
+                    <option value="9">9 kg</option>
+                    <option value="10">10 kg</option>
+                    <option value="12">12 kg</option>
+                    <option value="15">15 kg</option>
+                    <option value="20">20 kg</option>
+                </select>
+            </div>
             <div id="shipping-settings-list" class="p-4 space-y-2 overflow-y-auto flex-1">
                 <div class="text-center text-gray-500 text-sm py-6">Hämtar fraktalternativ...</div>
             </div>
@@ -6400,11 +6419,17 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             if (pr.maxLength && pr.maxWidth && pr.maxHeight) {
                 return `Max ${cm(pr.maxLength)}×${cm(pr.maxWidth)}×${cm(pr.maxHeight)} cm`;
             }
+            if (pr.maxLength && pr.maxLengthPlusCircumference) {
+                return `Max ${cm(pr.maxLength)} cm lång, längd+omkrets max ${cm(pr.maxLengthPlusCircumference)} cm`;
+            }
             if (pr.maxLength && pr.maxSumOfAllSides) {
                 return `Max ${cm(pr.maxLength)} cm lång, ${cm(pr.maxSumOfAllSides)} cm sammanlagt`;
             }
             if (pr.maxSumOfAllSides) {
                 return `Max ${cm(pr.maxSumOfAllSides)} cm sammanlagt`;
+            }
+            if (pr.maxLength) {
+                return `Max ${cm(pr.maxLength)} cm lång`;
             }
             return '';
         }
@@ -6433,63 +6458,98 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             return products;
         }
 
+        function shippingSettingsKey(shippingOptionId, sizeLabel) {
+            return `${shippingOptionId}|${sizeLabel || ''}`;
+        }
+
         window.openShippingSettingsModal = async () => {
             document.getElementById('shipping-settings-modal').classList.replace('hidden', 'flex');
             const list = document.getElementById('shipping-settings-list');
             list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Hämtar fraktalternativ...</div>`;
             try {
-                const catId = document.getElementById('publish-category')?.value || '1301';
-                const products = await traderaFetchShippingProductsForWeight(catId, TRADERA_STANDARD_WEIGHT);
-                window._traderaShippingProducts = products;
-
                 const existingDefaults = await traderaLoadShippingDefaults();
-                const defaultsMap = new Map((existingDefaults.selections || []).map(d => [d.shippingProductId, d.cost]));
                 const surchargeInput = document.getElementById('shipping-packaging-surcharge');
                 if (surchargeInput) surchargeInput.value = existingDefaults.packagingSurcharge ?? 3;
+                document.getElementById('shipping-settings-weight').value = String(existingDefaults.defaultWeight ?? 1);
 
-                if (products.length === 0) {
-                    list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Inga fraktalternativ hittades för 1 kg.</div>`;
-                    return;
-                }
-
-                list.innerHTML = products.map((p, i) => {
-                    const checked = defaultsMap.has(p.id) ? 'checked' : '';
-                    const cost = defaultsMap.has(p.id) ? defaultsMap.get(p.id) : p.price;
-                    const isCustom = p.shippingProviderId === 6; // "Annat" - enda alternativet med eget pris
-                    const baseName = isCustom ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
-                    const displayName = p.sizeLabel ? `${baseName} (${p.sizeLabel})` : baseName;
-
-                    const di = p.deliveryInformation || {};
-                    const et = di.estimatedDeliveryTime || {};
-                    let deliveryText = '';
-                    if (et.minWeekdays !== undefined) {
-                        deliveryText = et.maxWeekdays && et.maxWeekdays !== et.minWeekdays
-                            ? `${et.minWeekdays}-${et.maxWeekdays} vardagar`
-                            : `${et.minWeekdays} vardagar`;
-                    }
-                    let pickupText = di.mailBoxWithServicePointBackup ? 'Brevlåda' : (di.servicePoint ? 'Utlämningsställe' : '');
-                    const traceText = di.isTraceable ? 'Spårbart' : 'Ej spårbart';
-                    const dimensionText = traderaDimensionText(p.packageRequirements);
-                    const subParts = isCustom ? ['Eget pris du sätter själv'] : [dimensionText, pickupText, traceText, deliveryText].filter(Boolean);
-
-                    const priceField = isCustom
-                        ? `<input type="number" id="ship-cost-${i}" value="${cost || ''}" placeholder="kr" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700 shrink-0">`
-                        : `<span id="ship-cost-${i}" data-fixed-cost="${cost}" class="w-20 text-right text-sm text-gray-400 shrink-0">${cost} kr</span>`;
-
-                    return `
-                        <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
-                            <input type="checkbox" id="ship-check-${i}" ${checked} class="w-4 h-4 accent-purple-500 shrink-0">
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm text-gray-300">${escapeHtml(displayName)}</div>
-                                <div class="text-[11px] text-gray-500">${escapeHtml(subParts.join(' · '))}</div>
-                            </div>
-                            ${priceField}
-                        </div>`;
-                }).join('');
+                window._shippingSettingsChecked = new Map(
+                    (existingDefaults.selections || []).map(d => [shippingSettingsKey(d.shippingOptionId, d.sizeLabel), d])
+                );
+                await window.loadShippingSettingsForWeight();
             } catch (e) {
                 console.error(e);
                 list.innerHTML = `<div class="text-center text-red-400 text-sm py-6">Kunde inte hämta fraktalternativ just nu.</div>`;
             }
+        };
+
+        window.onShippingSettingsWeightChange = async () => {
+            // Spara vilka som är ibockade just nu innan vi byter vikt, så valet inte tappas
+            const products = window._traderaShippingProducts || [];
+            const map = new Map();
+            products.forEach((p, i) => {
+                const cb = document.getElementById(`ship-check-${i}`);
+                if (cb && cb.checked) {
+                    const costEl = document.getElementById(`ship-cost-${i}`);
+                    const cost = costEl.tagName === 'INPUT' ? (parseInt(costEl.value, 10) || 0) : (parseInt(costEl.dataset.fixedCost, 10) || 0);
+                    const key = shippingSettingsKey(p.shippingProviderId, p.sizeLabel);
+                    map.set(key, { shippingOptionId: p.shippingProviderId, sizeLabel: p.sizeLabel || '', cost });
+                }
+            });
+            window._shippingSettingsChecked = map;
+            await window.loadShippingSettingsForWeight();
+        };
+
+        window.loadShippingSettingsForWeight = async () => {
+            const catId = document.getElementById('publish-category')?.value || '1301';
+            const weight = parseFloat(document.getElementById('shipping-settings-weight').value);
+            const list = document.getElementById('shipping-settings-list');
+            list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Hämtar fraktalternativ...</div>`;
+
+            const products = await traderaFetchShippingProductsForWeight(catId, weight);
+            window._traderaShippingProducts = products;
+            const checkedMap = window._shippingSettingsChecked || new Map();
+
+            if (products.length === 0) {
+                list.innerHTML = `<div class="text-center text-gray-500 text-sm py-6">Inga fraktalternativ hittades för den vikten.</div>`;
+                return;
+            }
+
+            list.innerHTML = products.map((p, i) => {
+                const key = shippingSettingsKey(p.shippingProviderId, p.sizeLabel);
+                const saved = checkedMap.get(key);
+                const checked = saved ? 'checked' : '';
+                const cost = saved ? saved.cost : p.price;
+                const isCustom = p.shippingProviderId === 6; // "Annat" - enda alternativet med eget pris
+                const baseName = isCustom ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
+                const displayName = p.sizeLabel ? `${baseName} (${p.sizeLabel})` : baseName;
+
+                const di = p.deliveryInformation || {};
+                const et = di.estimatedDeliveryTime || {};
+                let deliveryText = '';
+                if (et.minWeekdays !== undefined) {
+                    deliveryText = et.maxWeekdays && et.maxWeekdays !== et.minWeekdays
+                        ? `${et.minWeekdays}-${et.maxWeekdays} vardagar`
+                        : `${et.minWeekdays} vardagar`;
+                }
+                let pickupText = di.mailBoxWithServicePointBackup ? 'Brevlåda' : (di.servicePoint ? 'Utlämningsställe' : '');
+                const traceText = di.isTraceable ? 'Spårbart' : 'Ej spårbart';
+                const dimensionText = traderaDimensionText(p.packageRequirements);
+                const subParts = isCustom ? ['Eget pris du sätter själv'] : [dimensionText, pickupText, traceText, deliveryText].filter(Boolean);
+
+                const priceField = isCustom
+                    ? `<input type="number" id="ship-cost-${i}" value="${cost || ''}" placeholder="kr" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700 shrink-0">`
+                    : `<span id="ship-cost-${i}" data-fixed-cost="${cost}" class="w-20 text-right text-sm text-gray-400 shrink-0">${cost} kr</span>`;
+
+                return `
+                    <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
+                        <input type="checkbox" id="ship-check-${i}" ${checked} class="w-4 h-4 accent-purple-500 shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm text-gray-300">${escapeHtml(displayName)}</div>
+                            <div class="text-[11px] text-gray-500">${escapeHtml(subParts.join(' · '))}</div>
+                        </div>
+                        ${priceField}
+                    </div>`;
+            }).join('');
         };
 
         window.closeShippingSettingsModal = () => {
@@ -6518,9 +6578,11 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             });
             try {
                 const surcharge = parseInt(document.getElementById('shipping-packaging-surcharge').value, 10) || 0;
+                const defaultWeight = parseFloat(document.getElementById('shipping-settings-weight').value);
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tradera_shipping_defaults'), {
                     selections,
                     packagingSurcharge: surcharge,
+                    defaultWeight,
                     updatedAt: Date.now(),
                 });
                 window.showToast('Standardfrakt sparad!', 'success');
@@ -6535,12 +6597,12 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
         async function traderaLoadShippingDefaults() {
             try {
                 const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tradera_shipping_defaults'));
-                if (!snap.exists()) return { selections: [], packagingSurcharge: 3 };
+                if (!snap.exists()) return { selections: [], packagingSurcharge: 3, defaultWeight: 1 };
                 const data = snap.data();
-                return { selections: data.selections || [], packagingSurcharge: data.packagingSurcharge ?? 3 };
+                return { selections: data.selections || [], packagingSurcharge: data.packagingSurcharge ?? 3, defaultWeight: data.defaultWeight ?? 1 };
             } catch (e) {
                 console.error(e);
-                return { selections: [], packagingSurcharge: 3 };
+                return { selections: [], packagingSurcharge: 3, defaultWeight: 1 };
             }
         }
 
@@ -6685,7 +6747,8 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             document.getElementById('publish-price').value = '';
             document.getElementById('publish-price-history').classList.add('hidden');
             window.setPublishAutoRenew(false);
-            document.getElementById('publish-weight').value = '1';
+            const savedWeight = (await traderaLoadShippingDefaults()).defaultWeight ?? 1;
+            document.getElementById('publish-weight').value = String(savedWeight);
 
             const isSingle = selected.length === 1;
             document.getElementById('publish-price-history-btn').classList.toggle('hidden', !isSingle);
