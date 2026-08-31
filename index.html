@@ -3954,7 +3954,7 @@
         };
 
         window.openLinkListingModal = (itemId) => {
-            window._linkListingItemId = itemId;
+            window._linkListingItemId = Number(itemId);
             document.getElementById('link-listing-modal').classList.replace('hidden', 'flex');
             document.getElementById('link-listing-search').value = '';
             window.filterLinkListingMovies();
