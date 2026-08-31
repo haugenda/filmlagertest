@@ -6386,6 +6386,14 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             'Instabox': 'Instabox (paketskåp)',
         };
 
+        function traderaSizeLabel(restrictions) {
+            if (!restrictions || !restrictions.length) return '';
+            if (restrictions.includes('likeAnA4')) return 'Kuvert/flat';
+            if (restrictions.includes('likeAShoeBox')) return 'Skokartong';
+            if (restrictions.includes('likeABox')) return 'Låda';
+            return '';
+        }
+
         async function traderaFetchShippingProductsForWeight(categoryId, weightKg) {
             const path = encodeURIComponent(`/reference-data/shipping-options?fromCountryCodes=SE&categoryIds=${categoryId}`);
             const res = await fetch('/.netlify/functions/tradera?path=' + path);
@@ -6396,14 +6404,16 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             const span = spans.find(s => s.weight === weightKg) || spans.find(s => s.weight >= weightKg) || spans[spans.length - 1];
             const rawProducts = (span && span.products) || [];
 
-            // Ta bort dubbletter - samma fraktbolag kan förekomma flera gånger
-            // i samma viktklass (olika paketstorlekar till samma pris).
+            // Behåll olika paketstorlekar för samma fraktbolag (t.ex. kuvert vs
+            // skokartong) - de har ofta olika pris. Slå bara ihop rader som är
+            // exakt likadana (samma bolag OCH samma storlekstyp OCH samma pris).
             const seen = new Set();
             const products = [];
             rawProducts.forEach(p => {
-                if (seen.has(p.shippingProviderId)) return;
-                seen.add(p.shippingProviderId);
-                products.push(p);
+                if (seen.has(p.id)) return;
+                seen.add(p.id);
+                const sizeLabel = traderaSizeLabel(p.packageRequirements && p.packageRequirements.restrictions);
+                products.push({ ...p, sizeLabel });
             });
             return products;
         }
@@ -6418,7 +6428,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 window._traderaShippingProducts = products;
 
                 const existingDefaults = await traderaLoadShippingDefaults();
-                const defaultsMap = new Map((existingDefaults.selections || []).map(d => [d.shippingOptionId, d.cost]));
+                const defaultsMap = new Map((existingDefaults.selections || []).map(d => [d.shippingProductId, d.cost]));
                 const surchargeInput = document.getElementById('shipping-packaging-surcharge');
                 if (surchargeInput) surchargeInput.value = existingDefaults.packagingSurcharge ?? 3;
 
@@ -6428,10 +6438,11 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 }
 
                 list.innerHTML = products.map((p, i) => {
-                    const checked = defaultsMap.has(p.shippingProviderId) ? 'checked' : '';
-                    const cost = defaultsMap.has(p.shippingProviderId) ? defaultsMap.get(p.shippingProviderId) : p.price;
+                    const checked = defaultsMap.has(p.id) ? 'checked' : '';
+                    const cost = defaultsMap.has(p.id) ? defaultsMap.get(p.id) : p.price;
                     const isCustom = p.shippingProviderId === 6; // "Annat" - enda alternativet med eget pris
-                    const displayName = isCustom ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
+                    const baseName = isCustom ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ('Fraktbolag ' + p.shippingProviderId));
+                    const displayName = p.sizeLabel ? `${baseName} (${p.sizeLabel})` : baseName;
 
                     const di = p.deliveryInformation || {};
                     const et = di.estimatedDeliveryTime || {};
@@ -6479,10 +6490,13 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     const cost = costEl.tagName === 'INPUT'
                         ? (parseInt(costEl.value, 10) || 0)
                         : (parseInt(costEl.dataset.fixedCost, 10) || 0);
+                    const baseName = p.shippingProviderId === 6 ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || '');
                     selections.push({
+                        shippingProductId: p.id,
                         shippingOptionId: p.shippingProviderId,
+                        sizeLabel: p.sizeLabel || '',
                         cost,
-                        name: p.shippingProviderId === 6 ? 'Annat' : (TRADERA_SHIPPING_NAMES[p.shippingProvider] || p.shippingProvider || ''),
+                        name: p.sizeLabel ? `${baseName} (${p.sizeLabel})` : baseName,
                     });
                 }
             });
@@ -6516,19 +6530,20 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
         window.renderPublishShippingList = (selections) => {
             const container = document.getElementById('publish-shipping-list');
-            window._publishState.shippingSelections = selections.map(s => ({ shippingOptionId: s.shippingOptionId, cost: s.cost }));
+            window._publishState.shippingSelections = selections.map(s => ({ shippingProductId: s.shippingProductId, shippingOptionId: s.shippingOptionId, cost: s.cost, name: s.name, included: true }));
 
             if (!selections.length) {
                 container.innerHTML = `<div class="text-xs text-amber-400">Inga standardval sparade ännu. Klicka "Ändra standardval" ovan.</div>`;
                 return;
             }
-            container.innerHTML = selections.map((s, i) => {
+            container.innerHTML = window._publishState.shippingSelections.map((s, i) => {
                 const isCustom = s.shippingOptionId === 6;
                 const priceField = isCustom
                     ? `<input type="number" onchange="window._publishState.shippingSelections[${i}].cost = parseInt(this.value,10)||0" value="${s.cost}" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700">`
                     : `<span class="w-20 text-right text-sm text-gray-400">${s.cost} kr</span>`;
                 return `
                     <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
+                        <input type="checkbox" checked onchange="window._publishState.shippingSelections[${i}].included = this.checked" class="w-4 h-4 accent-purple-500 shrink-0">
                         <span class="flex-1 text-sm text-gray-300">${escapeHtml(s.name || 'Frakt ' + s.shippingOptionId)}</span>
                         ${priceField}
                     </div>`;
@@ -6552,18 +6567,22 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
             try {
                 const products = await traderaFetchShippingProductsForWeight(catId, weight);
-                const priceByProvider = new Map(products.map(p => [p.shippingProviderId, p.price]));
+                const byProviderAndSize = new Map(products.map(p => [`${p.shippingProviderId}|${p.sizeLabel || ''}`, p]));
 
                 const defaults = await traderaLoadShippingDefaults();
                 window._publishState.packagingSurcharge = defaults.packagingSurcharge;
 
                 const selections = (defaults.selections || [])
-                    .filter(s => s.shippingOptionId === 6 || priceByProvider.has(s.shippingOptionId))
-                    .map(s => ({
-                        shippingOptionId: s.shippingOptionId,
-                        cost: s.shippingOptionId === 6 ? s.cost : priceByProvider.get(s.shippingOptionId),
-                        name: s.name,
-                    }));
+                    .map(s => {
+                        if (s.shippingOptionId === 6) {
+                            // "Annat" - eget pris, oberoende av vikt
+                            return { shippingProductId: s.shippingProductId, shippingOptionId: s.shippingOptionId, cost: s.cost, name: s.name };
+                        }
+                        const match = byProviderAndSize.get(`${s.shippingOptionId}|${s.sizeLabel || ''}`);
+                        if (!match) return null;
+                        return { shippingProductId: match.id, shippingOptionId: s.shippingOptionId, cost: match.price, name: s.name };
+                    })
+                    .filter(Boolean);
 
                 window.renderPublishShippingList(selections);
             } catch (e) {
@@ -6777,8 +6796,9 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 setPublishStatus('Välj minst en bild.', 'error');
                 return;
             }
-            if (state.shippingSelections.length === 0) {
-                setPublishStatus('Välj minst ett fraktalternativ (Ändra standardval).', 'error');
+            const includedShipping = state.shippingSelections.filter(s => s.included);
+            if (includedShipping.length === 0) {
+                setPublishStatus('Bocka för minst ett fraktalternativ.', 'error');
                 return;
             }
             const wantsPickup = document.getElementById('publish-pickup').checked;
@@ -6793,8 +6813,9 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             setPublishStatus('Skapar annons-utkast hos Tradera...', 'info');
 
             try {
-                const shippingOptionsPayload = state.shippingSelections.map(s => ({
+                const shippingOptionsPayload = includedShipping.map(s => ({
                     shippingOptionId: s.shippingOptionId,
+                    shippingProductId: s.shippingProductId,
                     cost: s.cost + (s.shippingOptionId === 6 ? 0 : (state.packagingSurcharge || 0)),
                 }));
                 if (wantsPickup) {
