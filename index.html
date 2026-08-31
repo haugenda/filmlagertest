@@ -6394,6 +6394,21 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             return '';
         }
 
+        function traderaDimensionText(pr) {
+            if (!pr) return '';
+            const cm = (m) => Math.round(m * 100);
+            if (pr.maxLength && pr.maxWidth && pr.maxHeight) {
+                return `Max ${cm(pr.maxLength)}×${cm(pr.maxWidth)}×${cm(pr.maxHeight)} cm`;
+            }
+            if (pr.maxLength && pr.maxSumOfAllSides) {
+                return `Max ${cm(pr.maxLength)} cm lång, ${cm(pr.maxSumOfAllSides)} cm sammanlagt`;
+            }
+            if (pr.maxSumOfAllSides) {
+                return `Max ${cm(pr.maxSumOfAllSides)} cm sammanlagt`;
+            }
+            return '';
+        }
+
         async function traderaFetchShippingProductsForWeight(categoryId, weightKg) {
             const path = encodeURIComponent(`/reference-data/shipping-options?fromCountryCodes=SE&categoryIds=${categoryId}`);
             const res = await fetch('/.netlify/functions/tradera?path=' + path);
@@ -6454,7 +6469,8 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     }
                     let pickupText = di.mailBoxWithServicePointBackup ? 'Brevlåda' : (di.servicePoint ? 'Utlämningsställe' : '');
                     const traceText = di.isTraceable ? 'Spårbart' : 'Ej spårbart';
-                    const subParts = isCustom ? ['Eget pris du sätter själv'] : [pickupText, traceText, deliveryText].filter(Boolean);
+                    const dimensionText = traderaDimensionText(p.packageRequirements);
+                    const subParts = isCustom ? ['Eget pris du sätter själv'] : [dimensionText, pickupText, traceText, deliveryText].filter(Boolean);
 
                     const priceField = isCustom
                         ? `<input type="number" id="ship-cost-${i}" value="${cost || ''}" placeholder="kr" class="w-20 bg-gray-800 text-white rounded-lg py-1.5 px-2 text-sm border border-gray-700 shrink-0">`
@@ -6530,7 +6546,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
         window.renderPublishShippingList = (selections) => {
             const container = document.getElementById('publish-shipping-list');
-            window._publishState.shippingSelections = selections.map(s => ({ shippingProductId: s.shippingProductId, shippingOptionId: s.shippingOptionId, cost: s.cost, name: s.name, included: true }));
+            window._publishState.shippingSelections = selections.map(s => ({ shippingProductId: s.shippingProductId, shippingOptionId: s.shippingOptionId, cost: s.cost, name: s.name, dimensionText: s.dimensionText, included: true }));
 
             if (!selections.length) {
                 container.innerHTML = `<div class="text-xs text-amber-400">Inga standardval sparade ännu. Klicka "Ändra standardval" ovan.</div>`;
@@ -6544,7 +6560,10 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 return `
                     <div class="flex items-center gap-2 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
                         <input type="checkbox" checked onchange="window._publishState.shippingSelections[${i}].included = this.checked" class="w-4 h-4 accent-purple-500 shrink-0">
-                        <span class="flex-1 text-sm text-gray-300">${escapeHtml(s.name || 'Frakt ' + s.shippingOptionId)}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm text-gray-300">${escapeHtml(s.name || 'Frakt ' + s.shippingOptionId)}</div>
+                            ${s.dimensionText ? `<div class="text-[11px] text-gray-500">${escapeHtml(s.dimensionText)}</div>` : ''}
+                        </div>
                         ${priceField}
                     </div>`;
             }).join('');
@@ -6580,7 +6599,7 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                         }
                         const match = byProviderAndSize.get(`${s.shippingOptionId}|${s.sizeLabel || ''}`);
                         if (!match) return null;
-                        return { shippingProductId: match.id, shippingOptionId: s.shippingOptionId, cost: match.price, name: s.name };
+                        return { shippingProductId: match.id, shippingOptionId: s.shippingOptionId, cost: match.price, name: s.name, dimensionText: traderaDimensionText(match.packageRequirements) };
                     })
                     .filter(Boolean);
 
