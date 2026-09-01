@@ -1557,6 +1557,33 @@
         </div>
     </div>
 
+    <!-- Förnya utgången annons -->
+    <div id="renew-listing-modal" class="fixed inset-0 z-[135] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="font-black text-white text-lg flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 text-red-400"></i> Förnya annons
+                </h2>
+                <button onclick="window.closeRenewListingModal()" class="text-gray-500 hover:text-white p-1">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-4">
+                <p id="renew-listing-title" class="text-sm text-gray-300 font-bold"></p>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Pris (kr)</label>
+                    <input type="number" id="renew-listing-price" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700" placeholder="0">
+                </div>
+                <div id="renew-listing-status" class="hidden text-sm rounded-xl p-3"></div>
+            </div>
+            <div class="p-4 border-t border-gray-800">
+                <button id="renew-listing-submit-btn" onclick="window.submitRenewListing()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Förnya
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Länka annons till film -->
     <div id="link-listing-modal" class="fixed inset-0 z-[140] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
         <div class="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl">
@@ -2865,6 +2892,7 @@
                 isLoading = false;
                 updateList();
                 if (window.checkExpiringListings) window.checkExpiringListings();
+                if (window.checkTraderaIdMismatches) window.checkTraderaIdMismatches();
             }, (error) => { console.error("Firestore Error:", error); isLoading = false; updateList(); });
 
             // Kör en oberoende bakgrundskoll var 15:e minut, oavsett om något
@@ -2878,6 +2906,7 @@
                 window._expiryCheckIntervalStarted = true;
                 setInterval(() => {
                     if (window.checkExpiringListings) window.checkExpiringListings();
+                    if (window.checkTraderaIdMismatches) window.checkTraderaIdMismatches();
                 }, 15 * 60 * 1000);
 
                 // PWA:er pausas/strypas i bakgrunden (skärm låst, annan app aktiv) -
@@ -2886,6 +2915,9 @@
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible' && window.checkExpiringListings) {
                         window.checkExpiringListings();
+                    }
+                    if (document.visibilityState === 'visible' && window.checkTraderaIdMismatches) {
+                        window.checkTraderaIdMismatches();
                     }
                 });
             }
@@ -3958,6 +3990,64 @@
         window._traderaLiveById = new Map();
         window._traderaLiveLoaded = false;
         window._traderaUnmatchedListings = [];
+
+        window.loadDetailTraderaInfo = async (itemId) => {
+            const box = document.getElementById('detail-tradera-info');
+            if (!box) return;
+            try {
+                const res = await fetch(`/.netlify/functions/tradera?path=/listings/items/${itemId}`);
+                const bodyText = await res.text();
+                let data = {};
+                try { data = bodyText ? JSON.parse(bodyText) : {}; } catch (e) { /* tomt eller ej-JSON svar */ }
+                if (!res.ok) throw new Error(traderaErrorMessage(data, 'HTTP ' + res.status));
+
+                const endDate = data.endDate ? new Date(data.endDate) : null;
+                if (!endDate) {
+                    box.textContent = 'Kunde inte läsa av slutdatum.';
+                    return;
+                }
+                const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+                const dateText = endDate.toLocaleDateString('sv-SE');
+                const isActive = endDate.getTime() > Date.now();
+
+                let html = `<div class="flex items-center gap-2 mb-1">
+                    <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${isActive ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-gray-400 border-gray-600 bg-gray-700/30'}">${isActive ? 'Aktiv' : 'Avslutad'}</span>
+                    ${data.buyItNowPrice !== undefined ? `<span class="text-sm font-bold text-white">${data.buyItNowPrice} kr</span>` : ''}
+                </div>`;
+                html += `<div><i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i> Annonsen går ut <b>${escapeHtml(dateText)}</b> (${daysLeft} dagar kvar)</div>`;
+                html += `<div class="text-xs text-gray-400 mt-1">Avhämtning: ${data.acceptsPickup ? 'Ja' : 'Nej'}</div>`;
+
+                if (Array.isArray(data.shippingOptions) && data.shippingOptions.length > 0) {
+                    const shipLabels = data.shippingOptions.map(s => {
+                        const pid = s.shippingOptionId ?? s.shippingProviderId;
+                        const name = (pid === 6) ? 'Annat' : (pid === 8) ? 'Avhämtning' : (TRADERA_SHIPPING_NAMES[s.shippingProvider] || s.shippingProvider || ('Alternativ ' + pid));
+                        const cost = s.cost !== undefined ? ` (${s.cost} kr)` : '';
+                        return `${name}${cost}`;
+                    });
+                    html += `<div class="text-xs text-gray-400 mt-1">Frakt: ${escapeHtml(shipLabels.join(', '))}</div>`;
+                }
+
+                if (data.restarts !== undefined && data.restarts !== null) {
+                    let restartText = `Inställt för ${data.restarts} automatisk${data.restarts === 1 ? '' : 'a'} omstart${data.restarts === 1 ? '' : 'er'}`;
+                    try {
+                        const rRes = await fetch(`/.netlify/functions/tradera?path=/items/${itemId}/restarts`);
+                        if (rRes.ok) {
+                            const rText = await rRes.text();
+                            const rData = rText ? JSON.parse(rText) : {};
+                            const usedCount = (rData.restartedItems || []).length;
+                            if (usedCount > 0) restartText += ` (redan omstartad ${usedCount} gång${usedCount === 1 ? '' : 'er'})`;
+                        }
+                    } catch (e) { /* strunta i om historiken inte gick att hämta */ }
+                    html += `<div class="text-xs text-purple-400 mt-1">${escapeHtml(restartText)}</div>`;
+                }
+
+                box.innerHTML = html;
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+                box.textContent = 'Kunde inte hämta slutdatum från Tradera.';
+            }
+        };
 
         window.loadTraderaLiveData = async () => {
             try {
@@ -7850,6 +7940,11 @@ const verkligtEmballage = hasShipping ? (packCost + dynamicFee) : packCost; // V
                             </div>
                             ${bulkInfoHtml}
                             ${currentPackageInfoHtml}
+                            ${(isAnnons && !sold && m.traderaItemId) ? `
+                            <div id="detail-tradera-info" class="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 mb-4 text-sm text-purple-300">
+                                Hämtar slutdatum från Tradera...
+                            </div>
+                            ` : ''}
                             ${(!isAnnons && !sold) ? `
                             <button onclick="window.openPublishModal('${m.id}')" class="w-full bg-purple-600 hover:bg-purple-500 text-white transition-colors font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 mb-4 shadow-lg">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Publicera på Tradera
@@ -7859,6 +7954,9 @@ const verkligtEmballage = hasShipping ? (packCost + dynamicFee) : packCost; // V
                                 <i data-lucide="tag" class="w-4 h-4"></i> ${isAnnons ? 'Markera som såld (Ligger ute på Tradera)' : 'Sälj direkt från lagret'}
                             </button>
                         `;
+                        if (isAnnons && !sold && m.traderaItemId) {
+                            window.loadDetailTraderaInfo(m.traderaItemId);
+                        }
                     }
                 }
                 
@@ -10925,6 +11023,181 @@ window.removeWishlistItem = async (id, btnElement) => {
         // TRADERA-ANNONSER: PÅMINNELSE EFTER TVÅ MÅNADER
         // ==========================================
         const TRADERA_UNSOLD_URL = 'https://www.tradera.com/my/listings?tab=unsold';
+        const TRADERA_ID_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 timmar - "två gånger om dagen"
+
+        window._renewListingState = { movieId: null, oldItemId: null, alertId: null };
+
+        window.openRenewListingModal = async (movieId, oldItemId, alertId) => {
+            const m = movies.find(x => x.id === movieId);
+            window._renewListingState = { movieId, oldItemId, alertId };
+
+            document.getElementById('renew-listing-modal').classList.replace('hidden', 'flex');
+            document.getElementById('renew-listing-status').classList.add('hidden');
+            document.getElementById('renew-listing-title').textContent = m ? (getExactData(m, 'FILMER') || 'Okänd titel') : 'Okänd titel';
+
+            const priceInput = document.getElementById('renew-listing-price');
+            priceInput.value = '';
+            // Försök förifylla med det gamla priset, om den avslutade annonsen fortfarande går att läsa
+            try {
+                const res = await fetch(`/.netlify/functions/tradera?path=/listings/items/${oldItemId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.buyItNowPrice) priceInput.value = data.buyItNowPrice;
+                }
+            } catch (e) { /* strunta i - fyll i manuellt då */ }
+
+            lucide.createIcons();
+        };
+
+        window.closeRenewListingModal = () => {
+            document.getElementById('renew-listing-modal').classList.replace('flex', 'hidden');
+        };
+
+        function setRenewListingStatus(message, kind) {
+            const el = document.getElementById('renew-listing-status');
+            el.classList.remove('hidden', 'bg-red-500/10', 'text-red-400', 'border-red-500/20', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20', 'bg-gray-800', 'text-gray-300');
+            if (kind === 'error') el.classList.add('bg-red-500/10', 'text-red-400', 'border', 'border-red-500/20');
+            else if (kind === 'success') el.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border', 'border-emerald-500/20');
+            else el.classList.add('bg-gray-800', 'text-gray-300');
+            el.textContent = message;
+        }
+
+        window.submitRenewListing = async () => {
+            const { movieId, oldItemId, alertId } = window._renewListingState;
+            const m = movies.find(x => x.id === movieId);
+            if (!m || !oldItemId) return;
+
+            const newPrice = parseInt(document.getElementById('renew-listing-price').value, 10);
+            if (!newPrice || newPrice <= 0) {
+                setRenewListingStatus('Fyll i ett giltigt pris.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('renew-listing-submit-btn');
+            btn.disabled = true;
+            setRenewListingStatus('Startar om annonsen...', 'info');
+
+            try {
+                const restartRes = await fetch(`/.netlify/functions/tradera?path=/listings/items/${oldItemId}/restart`, {
+                    method: 'POST',
+                });
+                const restartBodyText = await restartRes.text();
+                let restartData = {};
+                try { restartData = restartBodyText ? JSON.parse(restartBodyText) : {}; } catch (e) { /* tomt eller ej-JSON svar */ }
+                if (!restartRes.ok) {
+                    throw new Error(traderaErrorMessage(restartData, 'HTTP ' + restartRes.status));
+                }
+                const newItemId = restartData.itemId || restartData.id || restartData.requestId;
+                if (!newItemId) {
+                    throw new Error('Fick inget nytt annons-ID tillbaka från Tradera.');
+                }
+
+                setRenewListingStatus('Omstart klar. Sätter nytt pris...', 'info');
+
+                const priceRes = await fetch(`/.netlify/functions/tradera?path=/listings/items/${newItemId}/price`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ binPrice: newPrice }),
+                });
+                if (!priceRes.ok) {
+                    const errData = await priceRes.json().catch(() => ({}));
+                    // Annonsen är ändå omstartad, bara priset som inte gick att sätta - fortsätt ändå
+                    console.error('Kunde inte sätta nytt pris:', traderaErrorMessage(errData, priceRes.status));
+                    window.showToast('Annonsen förnyades, men priset gick inte att ändra automatiskt - kontrollera på Tradera.', 'error');
+                }
+
+                await updateDoc(doc(moviesCollection, m.id), {
+                    'ANNONS?': 'TRUE',
+                    traderaItemId: newItemId,
+                    annonsDate: Date.now(),
+                });
+                if (alertId) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertId));
+                }
+
+                setRenewListingStatus('Klart! Annonsen är förnyad.', 'success');
+                window.showToast('Annonsen är förnyad!', 'success');
+                setTimeout(() => window.closeRenewListingModal(), 1200);
+            } catch (e) {
+                console.error(e);
+                setRenewListingStatus('Något gick fel: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        window.checkTraderaIdMismatches = async () => {
+            try {
+                const lastCheck = parseInt(localStorage.getItem('traderaIdCheckLastRun') || '0', 10);
+                if (Date.now() - lastCheck < TRADERA_ID_CHECK_INTERVAL_MS) return;
+
+                const path = encodeURIComponent('/listings/seller-items?filterActive=1');
+                const res = await fetch('/.netlify/functions/tradera?path=' + path);
+                if (!res.ok) return; // t.ex. proxyn inte tillgänglig lokalt - försök igen nästa gång
+                localStorage.setItem('traderaIdCheckLastRun', String(Date.now()));
+
+                const items = await res.json();
+                const activeIds = new Set((items || []).map(it => it.id));
+
+                const listedMovies = movies.filter(m =>
+                    String(getExactData(m, 'ANNONS?')).toUpperCase() === 'TRUE' &&
+                    !isMovieSold(m) &&
+                    m.traderaItemId
+                );
+                const staleMovies = listedMovies.filter(m => !activeIds.has(m.traderaItemId));
+                const staleMovieIds = new Set(staleMovies.map(m => m.id));
+
+                for (const m of staleMovies) {
+                    const title = getExactData(m, 'FILMER') || 'Okänd titel';
+
+                    // Kolla om Tradera redan startat om annonsen automatiskt
+                    let newId = null;
+                    try {
+                        const rRes = await fetch(`/.netlify/functions/tradera?path=/items/${m.traderaItemId}/restarts`);
+                        if (rRes.ok) {
+                            const rText = await rRes.text();
+                            const rData = rText ? JSON.parse(rText) : {};
+                            if (rData.lastRestartedItemId && rData.lastRestartedItemId !== m.traderaItemId) {
+                                newId = rData.lastRestartedItemId;
+                            }
+                        }
+                    } catch (e) { /* strunta i, hanteras som "ej omstartad" nedan */ }
+
+                    if (newId) {
+                        // Redan omstartad (av Tradera eller manuellt) - synka bara upp ID:t
+                        await updateDoc(doc(moviesCollection, m.id), { traderaItemId: newId });
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', 'tradera_renewed_' + m.id), {
+                            type: 'tradera_auto_renewed',
+                            subject: title,
+                            movieId: m.id,
+                            timestamp: Date.now(),
+                        });
+                    } else {
+                        // Verkligen utgången, ingen omstart har skett
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', 'tradera_needs_renewal_' + m.id), {
+                            type: 'tradera_needs_renewal',
+                            subject: title,
+                            movieId: m.id,
+                            oldItemId: m.traderaItemId,
+                            timestamp: Date.now(),
+                        });
+                    }
+                }
+
+                // Städa bort larm för filmer som inte längre är aktuella
+                // (t.ex. efter att förnyelsen redan genomförts)
+                const alertsSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'paid_alerts'));
+                for (const alertDoc of alertsSnap.docs) {
+                    const data = alertDoc.data();
+                    if ((data.type === 'tradera_needs_renewal') && !staleMovieIds.has(data.movieId)) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertDoc.id));
+                    }
+                }
+            } catch (e) {
+                console.error('checkTraderaIdMismatches misslyckades:', e);
+            }
+        };
+
         const LISTING_DURATION_MONTHS = 2;
 
         window.checkExpiringListings = () => {
@@ -11038,6 +11311,16 @@ window.removeWishlistItem = async (id, btnElement) => {
                         iconColor = "text-orange-400";
                         bgColor = "bg-orange-500/10 border-orange-500/20";
                         typeText = "Emballage börjar ta slut" + (data.qty !== undefined ? ` (${data.qty} kvar)` : "");
+                    } else if (data.type === 'tradera_auto_renewed') {
+                        icon = "refresh-cw";
+                        iconColor = "text-emerald-400";
+                        bgColor = "bg-emerald-500/10 border-emerald-500/20";
+                        typeText = "Annonsen gick ut, startades om automatiskt";
+                    } else if (data.type === 'tradera_needs_renewal') {
+                        icon = "alarm-clock";
+                        iconColor = "text-red-400";
+                        bgColor = "bg-red-500/10 border-red-500/20";
+                        typeText = "Annonsen har gått ut - vill du förnya?";
                     }
 
                     let actionButtons = `
@@ -11066,6 +11349,24 @@ window.removeWishlistItem = async (id, btnElement) => {
                         actionButtons = `
                             <button onclick="window.openPackagingModal(); window.dismissAlert(this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-amber-600 hover:bg-amber-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Öppna emballage-verktyget">
                                 <i data-lucide="box" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                    } else if (data.type === 'tradera_auto_renewed') {
+                        actionButtons = `
+                            <button onclick="window.closeAlertList(); if (currentFilterStatus !== 'tradera') window.toggleTraderaFilter(); window.dismissAlert(this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Visa filmen">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                    } else if (data.type === 'tradera_needs_renewal') {
+                        actionButtons = `
+                            <button onclick="window.closeAlertList(); window.openRenewListingModal('${escapeHtml(data.movieId || '')}', '${escapeHtml(data.oldItemId || '')}', this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-red-600 hover:bg-red-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Förnya annonsen">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                             </button>
                             <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
                                 <i data-lucide="x" class="w-4 h-4"></i>
