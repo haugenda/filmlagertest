@@ -4017,16 +4017,6 @@
                 html += `<div><i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i> Annonsen går ut <b>${escapeHtml(dateText)}</b> (${daysLeft} dagar kvar)</div>`;
                 html += `<div class="text-xs text-gray-400 mt-1">Avhämtning: ${data.acceptsPickup ? 'Ja' : 'Nej'}</div>`;
 
-                if (Array.isArray(data.shippingOptions) && data.shippingOptions.length > 0) {
-                    const shipLabels = data.shippingOptions.map(s => {
-                        const pid = s.shippingOptionId ?? s.shippingProviderId;
-                        const name = (pid === 6) ? 'Annat' : (pid === 8) ? 'Avhämtning' : (TRADERA_SHIPPING_NAMES[s.shippingProvider] || s.shippingProvider || ('Alternativ ' + pid));
-                        const cost = s.cost !== undefined ? ` (${s.cost} kr)` : '';
-                        return `${name}${cost}`;
-                    });
-                    html += `<div class="text-xs text-gray-400 mt-1">Frakt: ${escapeHtml(shipLabels.join(', '))}</div>`;
-                }
-
                 if (data.restarts !== undefined && data.restarts !== null) {
                     let restartText = `Inställt för ${data.restarts} automatisk${data.restarts === 1 ? '' : 'a'} omstart${data.restarts === 1 ? '' : 'er'}`;
                     try {
@@ -6700,6 +6690,19 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             'DHLExpress': 'DHL Express',
             'SchenkerPrivpak': 'DB Schenker Privatpaket',
             'Instabox': 'Instabox (paketskåp)',
+        };
+
+        // Samma namn, fast nyckel = fraktbolagets siffer-ID - vissa Tradera-svar
+        // (t.ex. en enskild annons) ger bara ID:t, inget textnamn.
+        const TRADERA_SHIPPING_NAMES_BY_ID = {
+            2: 'DHL Paket',
+            6: 'Annat',
+            7: 'DB Schenker Privatpaket',
+            8: 'Avhämtning',
+            12: 'PostNord Paket',
+            13: 'PostNord Frimärke (brevlåda)',
+            19: 'Instabox (paketskåp)',
+            20: 'DHL Express',
         };
 
         function traderaSizeLabel(restrictions) {
