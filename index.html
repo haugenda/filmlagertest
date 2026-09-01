@@ -162,7 +162,7 @@
                         <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center justify-start gap-1 mb-0.5"><i data-lucide="archive" class="w-3 h-3 hidden text-blue-400" id="instock-filter-icon"></i> I lager</span>
                         <span id="stat-instock" class="text-white font-black text-lg">0</span> <span class="text-gray-500 text-xs">st</span>
                     </div>
-                    <div class="text-center cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95" onclick="window.openMinaAnnonserModal()" id="tradera-filter-btn" title="Klicka för att visa dina Tradera-annonser">
+                    <div class="text-center cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95" onclick="window.toggleTraderaFilter()" id="tradera-filter-btn" title="Klicka för att visa dina Tradera-annonser">
                         <span class="text-[10px] text-purple-400/70 uppercase tracking-widest font-bold flex items-center justify-center gap-1 mb-0.5"><i data-lucide="filter" class="w-3 h-3 hidden text-purple-400" id="tradera-filter-icon"></i> På Tradera</span>
                         <span id="stat-listed" class="text-purple-400 font-black text-lg">0</span> <span class="text-gray-500 text-xs">(<span id="stat-percent">0</span>%)</span>
                     </div>
@@ -1553,25 +1553,6 @@
             <p class="text-[11px] text-gray-600 px-4 pb-3">Gäller inte "Annat" - där är priset du skriver in redan det slutgiltiga.</p>
             <div class="p-4 border-t border-gray-800 shrink-0">
                 <button onclick="window.saveShippingDefaults()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl">Spara som standard</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- MINA ANNONSER PÅ TRADERA -->
-    <!-- ============================================================ -->
-    <div id="mina-annonser-modal" class="fixed inset-0 z-[130] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center shrink-0">
-                <h2 class="font-black text-white text-lg flex items-center gap-2">
-                    <i data-lucide="tag" class="w-5 h-5 text-purple-400"></i> Mina annonser på Tradera
-                </h2>
-                <button onclick="window.closeMinaAnnonserModal()" class="text-gray-500 hover:text-white p-1">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div id="mina-annonser-body" class="p-4 overflow-y-auto space-y-4 flex-1">
-                <div class="text-center text-gray-500 text-sm py-10">Hämtar dina annonser från Tradera...</div>
             </div>
         </div>
     </div>
@@ -3168,6 +3149,19 @@
             countBadge.innerHTML = `<span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sökresultat</span> <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">${moviesToRender.length} träffar</span>`;
             movieListEl.appendChild(countBadge);
 
+            if (currentFilterStatus === 'tradera' && window._traderaLiveLoaded && window._traderaUnmatchedListings.length > 0) {
+                const strip = document.createElement('div');
+                strip.className = "mb-3";
+                strip.innerHTML = `
+                    <div onclick="window.toggleUnmatchedListingsStrip()" class="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-purple-500/20 transition-colors">
+                        <span class="text-xs text-purple-300 font-bold">${window._traderaUnmatchedListings.length} annonser kunde inte kopplas till en film</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-purple-400" id="unmatched-strip-chevron"></i>
+                    </div>
+                    <div id="unmatched-strip-content" class="hidden mt-2 space-y-1.5"></div>
+                `;
+                movieListEl.appendChild(strip);
+            }
+
             moviesToRender.forEach(movie => {
                 const sold = isMovieSold(movie);
                 let isAnnons = String(getExactData(movie, 'ANNONS?')).toUpperCase() === 'TRUE';
@@ -3301,6 +3295,26 @@
                     }
                 }
 
+                let traderaFilterModeHtml = '';
+                if (currentFilterStatus === 'tradera' && isAnnons && !sold && window._traderaLiveLoaded) {
+                    const liveItem = window._traderaLiveById.get(movie.traderaItemId);
+                    if (!liveItem) {
+                        traderaFilterModeHtml = `
+                            <div class="mt-3 pt-3 border-t border-gray-800/50 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 flex items-center justify-between gap-2" onclick="event.stopPropagation()">
+                                <span class="text-[11px] text-amber-400">Sparat ID stämmer inte längre</span>
+                                <button onclick="window.fixStaleTraderaId('${movie.id}')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg whitespace-nowrap">Hitta rätt annons</button>
+                            </div>`;
+                    } else {
+                        traderaFilterModeHtml = `
+                            <div class="mt-3 pt-3 border-t border-gray-800/50 flex items-center gap-2" onclick="event.stopPropagation()">
+                                <span class="text-[11px] text-gray-500 whitespace-nowrap">Pris på Tradera</span>
+                                <input type="number" id="tradera-live-price-${movie.id}" value="${liveItem.buyItNowPrice || ''}" class="w-20 bg-gray-950 text-white rounded-lg py-1 px-2 text-sm border border-gray-700">
+                                <span class="text-xs text-gray-500">kr</span>
+                                <button onclick="window.saveTraderaItemPrice('${movie.traderaItemId}', 'tradera-live-price-${movie.id}')" class="text-xs text-blue-400 hover:text-blue-300 font-bold">Spara</button>
+                            </div>`;
+                    }
+                }
+
                 let sellBtnHtml = '';
                 if (!sold) {
                     if (window.currentWorkMode === 'standard') {
@@ -3338,6 +3352,7 @@
                         ${adModeHtml}
                         ${sortModeHtml}
                         ${cleanupModeHtml}
+                        ${traderaFilterModeHtml}
                     </div>
                     <div class="flex items-center justify-center shrink-0 pl-1">
                         ${sellBtnHtml}
@@ -3817,92 +3832,6 @@
 
         window._minaAnnonserData = { items: [], staleMovies: [] };
 
-        window.openMinaAnnonserModal = async () => {
-            document.getElementById('mina-annonser-modal').classList.replace('hidden', 'flex');
-            const body = document.getElementById('mina-annonser-body');
-            body.innerHTML = `<div class="text-center text-gray-500 text-sm py-10">Hämtar dina annonser från Tradera...</div>`;
-
-            try {
-                const path = encodeURIComponent('/listings/seller-items?filterActive=1');
-                const res = await fetch('/.netlify/functions/tradera?path=' + path);
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(traderaErrorMessage(errData, 'HTTP ' + res.status));
-                }
-                const items = await res.json();
-                window._minaAnnonserData.items = items || [];
-
-                const activeIds = new Set((items || []).map(it => it.id));
-                const itemById = new Map((items || []).map(it => [it.id, it]));
-
-                // Filmer med sparat ID som INTE längre är aktivt
-                const listedMovies = movies.filter(m => String(getExactData(m, 'ANNONS?')).toUpperCase() === 'TRUE' && !isMovieSold(m) && m.traderaItemId);
-                const staleMovies = listedMovies.filter(m => !activeIds.has(m.traderaItemId));
-                window._minaAnnonserData.staleMovies = staleMovies;
-
-                // Matchning: annons-id -> film
-                const movieByItemId = new Map(listedMovies.filter(m => activeIds.has(m.traderaItemId)).map(m => [m.traderaItemId, m]));
-
-                renderMinaAnnonser(items || [], staleMovies, movieByItemId);
-            } catch (e) {
-                console.error(e);
-                body.innerHTML = `<div class="text-center text-red-400 text-sm py-10">Kunde inte hämta dina annonser: ${escapeHtml(e.message)}</div>`;
-            }
-        };
-
-        window.closeMinaAnnonserModal = () => {
-            document.getElementById('mina-annonser-modal').classList.replace('flex', 'hidden');
-        };
-
-        function renderMinaAnnonser(items, staleMovies, movieByItemId) {
-            const body = document.getElementById('mina-annonser-body');
-            let html = '';
-
-            if (staleMovies.length > 0) {
-                html += `
-                    <div>
-                        <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2">Att åtgärda - fel sparat ID (${staleMovies.length})</h3>
-                        <div class="space-y-2">
-                            ${staleMovies.map(m => `
-                                <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center justify-between gap-2">
-                                    <span class="text-sm text-gray-200">${escapeHtml(getExactData(m, 'FILMER') || 'Okänd titel')}</span>
-                                    <button onclick="window.fixStaleTraderaId('${m.id}')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg whitespace-nowrap">Hitta rätt annons</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-            }
-
-            html += `
-                <div>
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Dina aktiva annonser (${items.length})</h3>
-                    <div class="space-y-2">
-                        ${items.map(it => {
-                            const linkedMovie = movieByItemId.get(it.id);
-                            return `
-                                <div class="bg-gray-950 border border-gray-800 rounded-xl p-2.5 flex gap-3">
-                                    <img src="${escapeHtml(it.thumbnailLink || '')}" class="w-14 h-14 object-cover rounded-lg bg-gray-800 shrink-0">
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-sm text-gray-200 truncate">${escapeHtml(it.shortDescription || 'Okänd titel')}</div>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <input type="number" id="mina-annonser-price-${it.id}" value="${it.buyItNowPrice || ''}" class="w-20 bg-gray-800 text-white rounded-lg py-1 px-2 text-sm border border-gray-700">
-                                            <span class="text-xs text-gray-500">kr</span>
-                                            <button onclick="window.saveTraderaItemPrice('${it.id}')" class="text-xs text-blue-400 hover:text-blue-300 font-bold">Spara pris</button>
-                                        </div>
-                                        <div class="mt-1.5">
-                                            ${linkedMovie
-                                                ? `<span class="text-[11px] text-emerald-400">Kopplad: ${escapeHtml(getExactData(linkedMovie, 'FILMER') || '')}</span>`
-                                                : `<button onclick="window.openLinkListingModal('${it.id}')" class="text-[11px] text-purple-400 hover:text-purple-300 font-bold">Länka till film</button>`}
-                                        </div>
-                                    </div>
-                                </div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
-
-            body.innerHTML = html;
-        }
-
         window.fixStaleTraderaId = async (movieId) => {
             const m = movies.find(x => x.id === movieId);
             if (!m || !m.traderaItemId) return;
@@ -3922,15 +3851,15 @@
                 }
                 await updateDoc(doc(moviesCollection, m.id), { traderaItemId: newId });
                 window.showToast('ID uppdaterat!', 'success');
-                window.openMinaAnnonserModal();
+                window.loadTraderaLiveData();
             } catch (e) {
                 console.error(e);
                 window.showToast('Kunde inte kolla omstartshistorik: ' + e.message, 'error');
             }
         };
 
-        window.saveTraderaItemPrice = async (itemId) => {
-            const input = document.getElementById(`mina-annonser-price-${itemId}`);
+        window.saveTraderaItemPrice = async (itemId, inputId) => {
+            const input = document.getElementById(inputId || `mina-annonser-price-${itemId}`);
             const newPrice = parseInt(input.value, 10);
             if (!newPrice || newPrice <= 0) {
                 window.showToast('Fyll i ett giltigt pris', 'error');
@@ -3947,6 +3876,9 @@
                     throw new Error(traderaErrorMessage(errData, 'HTTP ' + res.status));
                 }
                 window.showToast('Pris uppdaterat på Tradera!', 'success');
+                if (window._traderaLiveById && window._traderaLiveById.has(Number(itemId))) {
+                    window._traderaLiveById.get(Number(itemId)).buyItNowPrice = newPrice;
+                }
             } catch (e) {
                 console.error(e);
                 window.showToast('Kunde inte uppdatera pris: ' + e.message, 'error');
@@ -3995,11 +3927,57 @@
                 });
                 window.showToast('Länkad!', 'success');
                 window.closeLinkListingModal();
-                window.openMinaAnnonserModal();
+                window.loadTraderaLiveData();
             } catch (e) {
                 console.error(e);
                 window.showToast('Kunde inte länka: ' + e.message, 'error');
             }
+        };
+
+        window.toggleUnmatchedListingsStrip = () => {
+            const content = document.getElementById('unmatched-strip-content');
+            const chevron = document.getElementById('unmatched-strip-chevron');
+            if (!content) return;
+            const isHidden = content.classList.contains('hidden');
+            if (isHidden) {
+                content.innerHTML = window._traderaUnmatchedListings.map(it => `
+                    <div class="bg-gray-950 border border-gray-800 rounded-xl p-2.5 flex gap-3 items-center">
+                        <img src="${escapeHtml(it.thumbnailLink || '')}" class="w-10 h-10 object-cover rounded-lg bg-gray-800 shrink-0">
+                        <span class="flex-1 min-w-0 text-sm text-gray-300 truncate">${escapeHtml(it.shortDescription || 'Okänd titel')}</span>
+                        <button onclick="window.openLinkListingModal('${it.id}')" class="text-[11px] text-purple-400 hover:text-purple-300 font-bold whitespace-nowrap">Länka till film</button>
+                    </div>
+                `).join('');
+                content.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                chevron.style.transform = '';
+            }
+        };
+
+        window._traderaLiveById = new Map();
+        window._traderaLiveLoaded = false;
+        window._traderaUnmatchedListings = [];
+
+        window.loadTraderaLiveData = async () => {
+            try {
+                const path = encodeURIComponent('/listings/seller-items?filterActive=1');
+                const res = await fetch('/.netlify/functions/tradera?path=' + path);
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(traderaErrorMessage(errData, 'HTTP ' + res.status));
+                }
+                const items = await res.json();
+                window._traderaLiveById = new Map((items || []).map(it => [it.id, it]));
+                const linkedItemIds = new Set(movies.filter(m => m.traderaItemId).map(m => m.traderaItemId));
+                window._traderaUnmatchedListings = (items || []).filter(it => !linkedItemIds.has(it.id));
+                window._traderaLiveLoaded = true;
+            } catch (e) {
+                console.error(e);
+                window.showToast('Kunde inte hämta dina Tradera-annonser: ' + e.message, 'error');
+                window._traderaLiveLoaded = false;
+            }
+            updateList();
         };
 
         window.toggleTraderaFilter = () => {
@@ -4007,6 +3985,9 @@
             searchInput.value = '';
             document.getElementById('clear-search-btn').classList.add('hidden');
             updateList();
+            if (currentFilterStatus === 'tradera') {
+                window.loadTraderaLiveData();
+            }
         };
 
         window.toggleInStockFilter = () => {
