@@ -142,6 +142,10 @@
                             <option value="year_asc">Äldst utgivningsår</option>
                             <option value="sold_desc">Senast sålda först</option>
                             <option value="sold_asc">Tidigast sålda först</option>
+                            <option value="annonsdate_desc">Senast utlagd på Tradera</option>
+                            <option value="annonsdate_asc">Tidigast utlagd på Tradera</option>
+                            <option value="expiry_asc">Går ut snarast</option>
+                            <option value="expiry_desc">Går ut senast</option>
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
                     </div>
@@ -3708,6 +3712,24 @@
                     if (dateA === dateB) return 0;
                     if (currentSort === 'sold_desc') return dateA > dateB ? -1 : 1;
                     return dateA < dateB ? -1 : 1;
+                }
+                if (currentSort === 'annonsdate_desc' || currentSort === 'annonsdate_asc') {
+                    const dA = a.traderaStartDate || a.annonsDate || 0;
+                    const dB = b.traderaStartDate || b.annonsDate || 0;
+                    if (dA === dB) return 0;
+                    if (currentSort === 'annonsdate_desc') return dA > dB ? -1 : 1;
+                    return dA < dB ? -1 : 1;
+                }
+                if (currentSort === 'expiry_asc' || currentSort === 'expiry_desc') {
+                    // Filmer utan känt slutdatum hamnar sist, oavsett riktning
+                    const dA = a.traderaEndDate || null;
+                    const dB = b.traderaEndDate || null;
+                    if (!dA && !dB) return 0;
+                    if (!dA) return 1;
+                    if (!dB) return -1;
+                    if (dA === dB) return 0;
+                    if (currentSort === 'expiry_asc') return dA < dB ? -1 : 1;
+                    return dA > dB ? -1 : 1;
                 }
                 return 0;
             });
@@ -11140,13 +11162,34 @@ window.removeWishlistItem = async (id, btnElement) => {
                 localStorage.setItem('traderaIdCheckLastRun', String(Date.now()));
 
                 const items = await res.json();
-                const activeIds = new Set((items || []).map(it => it.id));
+                const itemById = new Map((items || []).map(it => [it.id, it]));
+                const activeIds = new Set(itemById.keys());
 
                 const listedMovies = movies.filter(m =>
                     String(getExactData(m, 'ANNONS?')).toUpperCase() === 'TRUE' &&
                     !isMovieSold(m) &&
                     m.traderaItemId
                 );
+
+                // Spara ner riktiga start- och slutdatum lokalt för sortering,
+                // som en biprodukt av hämtningen ovan - ingen extra Tradera-hämtning krävs.
+                for (const m of listedMovies) {
+                    const item = itemById.get(m.traderaItemId);
+                    if (!item) continue;
+                    const updates = {};
+                    if (item.endDate) {
+                        const endTimestamp = new Date(item.endDate).getTime();
+                        if (endTimestamp !== m.traderaEndDate) updates.traderaEndDate = endTimestamp;
+                    }
+                    if (item.startDate) {
+                        const startTimestamp = new Date(item.startDate).getTime();
+                        if (startTimestamp !== m.traderaStartDate) updates.traderaStartDate = startTimestamp;
+                    }
+                    if (Object.keys(updates).length > 0) {
+                        await updateDoc(doc(moviesCollection, m.id), updates);
+                    }
+                }
+
                 const staleMovies = listedMovies.filter(m => !activeIds.has(m.traderaItemId));
                 const staleMovieIds = new Set(staleMovies.map(m => m.id));
 
