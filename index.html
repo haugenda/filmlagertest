@@ -1284,7 +1284,7 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] text-gray-400 mb-1">Ute på Tradera?</label>
-                                <select id="edit-annons" onchange="window.toggleAnnonsDateField()" class="w-full bg-gray-950 text-white rounded-lg py-2 px-3 border border-gray-800 focus:border-blue-500 text-sm">
+                                <select id="edit-annons" class="w-full bg-gray-950 text-white rounded-lg py-2 px-3 border border-gray-800 focus:border-blue-500 text-sm">
                                     <option value="FALSE">Nej (I lager)</option>
                                     <option value="TRUE">Ja (Ute på annons)</option>
                                 </select>
@@ -1295,10 +1295,6 @@
                                     <option value="">Osorterad</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="mt-3 hidden" id="edit-annons-date-wrapper">
-                            <label class="block text-[10px] text-gray-400 mb-1">Listad datum (styr 2-månaderspåminnelsen)</label>
-                            <input type="date" id="edit-annons-date" class="w-full bg-gray-950 text-white rounded-lg py-2 px-3 border border-gray-800 focus:border-blue-500 text-sm">
                         </div>
                         <div class="mt-3">
                             <label class="block text-[10px] text-gray-400 mb-1">Genre (Separera med kommatecken)</label>
@@ -2844,16 +2840,6 @@
             return new Date(dateStr + 'T00:00:00').getTime();
         };
 
-        // Lägger till X kalendermånader på en timestamp. Skiljer sig från
-        // en fast "60 dagar"-räknare eftersom månader har olika längd
-        // (februari är kortare än mars) - det här ger en riktig
-        // "två månader senare"-gräns, inte en approximation i dagar.
-        window.addMonths = (ts, months) => {
-            const d = new Date(ts);
-            d.setMonth(d.getMonth() + months);
-            return d.getTime();
-        };
-
         const movieListEl = document.getElementById('movie-list');
         const searchInput = document.getElementById('search-input');
         const detailView = document.getElementById('detail-view');
@@ -2895,21 +2881,19 @@
                 movies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 isLoading = false;
                 updateList();
-                if (window.checkExpiringListings) window.checkExpiringListings();
                 if (window.checkTraderaIdMismatches) window.checkTraderaIdMismatches();
             }, (error) => { console.error("Firestore Error:", error); isLoading = false; updateList(); });
 
             // Kör en oberoende bakgrundskoll var 15:e minut, oavsett om något
-            // ändras i filmdatan. Utan detta triggas checkExpiringListings bara
-            // som en bieffekt av att filmer redigeras/säljs/läggs till - står
-            // appen still en hel dag utan sådana ändringar upptäcks aldrig en
-            // utgången annons förrän nästa gång datan råkar ändras.
+            // ändras i filmdatan. Utan detta triggas kontrollen bara som en
+            // bieffekt av att filmer redigeras/säljs/läggs till - står appen
+            // still en hel dag utan sådana ändringar upptäcks aldrig ett
+            // ID-glapp förrän nästa gång datan råkar ändras.
             // Skyddad så den bara startas en gång, även om onAuthStateChanged
             // skulle trigga flera gånger (t.ex. vid token-förnyelse).
             if (!window._expiryCheckIntervalStarted) {
                 window._expiryCheckIntervalStarted = true;
                 setInterval(() => {
-                    if (window.checkExpiringListings) window.checkExpiringListings();
                     if (window.checkTraderaIdMismatches) window.checkTraderaIdMismatches();
                 }, 15 * 60 * 1000);
 
@@ -2917,9 +2901,6 @@
                 // setInterval ovan hinner då inte köra. Kör kontrollen direkt så
                 // fort appen blir synlig igen, så vi inte väntar på nästa tick.
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible' && window.checkExpiringListings) {
-                        window.checkExpiringListings();
-                    }
                     if (document.visibilityState === 'visible' && window.checkTraderaIdMismatches) {
                         window.checkTraderaIdMismatches();
                     }
@@ -6041,17 +6022,6 @@ window.renderMonthlyStats = (year) => {
         // ==========================================
         // REDIGERA LOGIK
         // ==========================================
-        
-        window.toggleAnnonsDateField = () => {
-            const isAnnons = document.getElementById('edit-annons').value === 'TRUE';
-            const wrapper = document.getElementById('edit-annons-date-wrapper');
-            wrapper.classList.toggle('hidden', !isAnnons);
-            // Om fältet visas men är tomt (t.ex. nyss växlat till Ja), föreslå dagens datum
-            const dateInput = document.getElementById('edit-annons-date');
-            if (isAnnons && !dateInput.value) {
-                dateInput.value = window.tsToDateInput(Date.now());
-            }
-        };
 
         window.openEditModal = (overrideId) => {
             // Om vi skickade in ett ID från listan, använd det! Annars använd det gamla.
@@ -6073,8 +6043,6 @@ window.renderMonthlyStats = (year) => {
             
             document.getElementById('edit-mediaformat').value = getExactData(m, 'MEDIAFORMAT') || 'DVD'; 
             document.getElementById('edit-annons').value = String(getExactData(m, 'ANNONS?')).toUpperCase() === 'TRUE' ? 'TRUE' : 'FALSE';
-            document.getElementById('edit-annons-date').value = m.annonsDate ? window.tsToDateInput(m.annonsDate) : '';
-            window.toggleAnnonsDateField();
 
             if (window.populateShelfDropdowns) window.populateShelfDropdowns(getExactData(m, 'HYLLPLATS') || '');
 
@@ -6181,22 +6149,15 @@ window.renderMonthlyStats = (year) => {
                     updates.tmdbDesc = deleteField();
                 }
 
-                // Håll koll på 2-månadersklockan för Tradera-annonser
+                // Sätt ett datum om filmen markeras som listad utan att redan ha ett -
+                // används bara som reservsortering tills filmen länkas till Tradera.
                 const wasAnnons = String(getExactData(m, 'ANNONS?')).toUpperCase() === 'TRUE';
                 const isAnnons = updates['ANNONS?'] === 'TRUE';
 
-                if (isAnnons) {
-                    const existingDateStr = m.annonsDate ? window.tsToDateInput(m.annonsDate) : '';
-                    const fieldDateStr = document.getElementById('edit-annons-date').value;
-                    const newDateStr = fieldDateStr || existingDateStr || window.tsToDateInput(Date.now());
-                    // Bara skriv om datumet faktiskt ändrats (dag för dag) - annars rör vi inte klockan
-                    if (newDateStr !== existingDateStr) {
-                        updates.annonsDate = window.dateInputToTs(newDateStr);
-                        updates.expiryAlerted = deleteField();
-                    }
+                if (isAnnons && !m.annonsDate) {
+                    updates.annonsDate = Date.now();
                 } else if (wasAnnons && !isAnnons) {
                     updates.annonsDate = deleteField();
-                    updates.expiryAlerted = deleteField();
                 }
 
                 await updateDoc(doc(moviesCollection, currentDetailMovieId), updates);
@@ -7426,9 +7387,15 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                     'ANNONS?': 'FALSE',
                     annonsDate: deleteField(),
                     expiryAlerted: deleteField(),
+                    traderaItemId: deleteField(),
+                    traderaEndDate: deleteField(),
+                    traderaStartDate: deleteField(),
+                    traderaAutoRenew: deleteField(),
+                    traderaOrderId: window._pendingTraderaSale ? window._pendingTraderaSale.orderId : deleteField(),
                     'SKICKAD': false 
 
                 });
+                window._pendingTraderaSale = null;
                 
                 window.showToast("Filmen är såld!", "success");
                 if (packType) window.decrementPackagingStock(packType, 1);
@@ -11045,12 +11012,34 @@ window.removeWishlistItem = async (id, btnElement) => {
         }; 
 
         // ==========================================
-        // TRADERA-ANNONSER: PÅMINNELSE EFTER TVÅ MÅNADER
+        // TRADERA-ANNONSER: BAKGRUNDSBEVAKNING
         // ==========================================
-        const TRADERA_UNSOLD_URL = 'https://www.tradera.com/my/listings?tab=unsold';
-        const TRADERA_ID_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 timmar - "två gånger om dagen"
+        const TRADERA_ID_CHECK_INTERVAL_MS = 15 * 60 * 1000; // 15 minuter - samma takt som appens övriga bakgrundskontroller
 
         window._renewListingState = { movieId: null, oldItemId: null, alertId: null };
+
+        window.handleSaleAlertClick = async (alertId) => {
+            const data = window._alertsCache ? window._alertsCache.get(alertId) : null;
+            if (!data) return;
+
+            window._pendingTraderaSale = { orderId: data.orderId };
+            window.initiateSale(data.movieId);
+
+            // initiateSale öppnar paket-flödet automatiskt om filmen har en
+            // paketId - då finns inga sell-price/sell-date-fält att fylla i,
+            // du fyller i paketets pris manuellt som vanligt.
+            const priceInput = document.getElementById('sell-price');
+            if (priceInput) {
+                priceInput.value = data.unitPrice || '';
+                document.getElementById('sell-shipping-paid').value = data.shippingCost || '';
+                document.getElementById('sell-date').value = data.createdDate ? String(data.createdDate).slice(0, 10) : '';
+                document.getElementById('sell-postal').value = data.zipCode || '';
+                document.getElementById('sell-city').value = data.city || '';
+                window.showToast('Uppgifter ifyllda från Tradera - välj emballage och bekräfta', 'success');
+            }
+
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertId));
+        };
 
         window.openRenewListingModal = async (movieId, oldItemId, alertId) => {
             const m = movies.find(x => x.id === movieId);
@@ -11193,8 +11182,52 @@ window.removeWishlistItem = async (id, btnElement) => {
                 const staleMovies = listedMovies.filter(m => !activeIds.has(m.traderaItemId));
                 const staleMovieIds = new Set(staleMovies.map(m => m.id));
 
+                // Hämta ordrar en gång och slå upp varje stale film mot dem,
+                // istället för att anta "utgången" direkt - en försäljning ser
+                // likadan ut som en utgången annons tills vi kollat ordrarna.
+                let orderByItemId = new Map();
+                if (staleMovies.length > 0) {
+                    try {
+                        const oRes = await fetch('/.netlify/functions/tradera?path=/orders');
+                        if (oRes.ok) {
+                            const orders = await oRes.json();
+                            (orders || []).forEach(order => {
+                                (order.items || []).forEach(item => {
+                                    orderByItemId.set(item.itemId, { order, item });
+                                });
+                            });
+                        }
+                    } catch (e) { /* strunta i, hanteras som "ej sålt" nedan */ }
+                }
+
+                const alertedOrderIds = new Set();
+
                 for (const m of staleMovies) {
                     const title = getExactData(m, 'FILMER') || 'Okänd titel';
+                    const match = orderByItemId.get(m.traderaItemId);
+                    const isPaid = match && Array.isArray(match.order.sellerOrderPayments) && match.order.sellerOrderPayments.length > 0;
+
+                    if (match && isPaid) {
+                        // Det här är en försäljning, inte en utgången annons.
+                        // Om flera filmer delar samma traderaItemId (ett paket)
+                        // skapar vi bara ett larm för hela ordern, inte ett per film.
+                        if (alertedOrderIds.has(match.order.orderId)) continue;
+                        alertedOrderIds.add(match.order.orderId);
+
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', 'tradera_sale_' + match.order.orderId), {
+                            type: 'tradera_sale',
+                            subject: title,
+                            movieId: m.id,
+                            orderId: match.order.orderId,
+                            unitPrice: match.item.unitPrice,
+                            shippingCost: match.order.shippingCost,
+                            zipCode: (match.order.shipTo && match.order.shipTo.zipCode) || '',
+                            city: (match.order.shipTo && match.order.shipTo.city) || '',
+                            createdDate: match.order.createdDate,
+                            timestamp: Date.now(),
+                        });
+                        continue;
+                    }
 
                     // Kolla om Tradera redan startat om annonsen automatiskt
                     let newId = null;
@@ -11231,72 +11264,20 @@ window.removeWishlistItem = async (id, btnElement) => {
                 }
 
                 // Städa bort larm för filmer som inte längre är aktuella
-                // (t.ex. efter att förnyelsen redan genomförts)
+                // (t.ex. efter att förnyelsen redan genomförts, eller gamla
+                // expiry-larm från det pensionerade 60-dagars-systemet)
                 const alertsSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'paid_alerts'));
                 for (const alertDoc of alertsSnap.docs) {
                     const data = alertDoc.data();
                     if ((data.type === 'tradera_needs_renewal') && !staleMovieIds.has(data.movieId)) {
                         await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertDoc.id));
                     }
+                    if (data.type === 'expiry') {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertDoc.id));
+                    }
                 }
             } catch (e) {
                 console.error('checkTraderaIdMismatches misslyckades:', e);
-            }
-        };
-
-        const LISTING_DURATION_MONTHS = 2;
-
-        window.checkExpiringListings = () => {
-            const now = Date.now();
-
-            movies.forEach(m => {
-                const isListed = String(getExactData(m, 'ANNONS?')).toUpperCase() === 'TRUE';
-                const annonsDate = m.annonsDate;
-                if (!isListed || !annonsDate || m.expiryAlerted) return;
-
-                const expiryDate = window.addMonths(annonsDate, LISTING_DURATION_MONTHS);
-                if (now >= expiryDate) {
-                    const title = getExactData(m, 'FILMER') || 'Okänd titel';
-
-                    setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', 'expiry_' + m.id), {
-                        type: 'expiry',
-                        subject: title,
-                        url: TRADERA_UNSOLD_URL,
-                        movieId: m.id,
-                        timestamp: now
-                    }).catch(err => console.error("Kunde inte skapa utgångsnotis:", err));
-
-                    // Flagga filmen så vi inte skapar samma notis om och om igen
-                    updateDoc(doc(moviesCollection, m.id), { expiryAlerted: true })
-                        .catch(err => console.error("Kunde inte flagga utgången annons:", err));
-                }
-            });
-        };
-
-        window.renewListing = async (movieId, alertId) => {
-            try {
-                await updateDoc(doc(moviesCollection, movieId), { annonsDate: Date.now(), expiryAlerted: deleteField() });
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertId));
-                window.showToast("Annonsen förnyad i 2 månader till!", "success");
-            } catch (e) {
-                console.error("Kunde inte förnya annonsen:", e);
-                window.showToast("Kunde inte förnya annonsen.", "error");
-            }
-        };
-
-        window.openAndRenewListing = (url, movieId, alertId) => {
-            if (url) window.open(url, 'TraderaListingFlik');
-            window.renewListing(movieId, alertId);
-        };
-
-        window.markListingRemoved = async (movieId, alertId) => {
-            try {
-                await updateDoc(doc(moviesCollection, movieId), { 'ANNONS?': 'FALSE', annonsDate: deleteField(), expiryAlerted: deleteField() });
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertId));
-                window.showToast("Filmen borttagen från Tradera-listan!", "success");
-            } catch (e) {
-                console.error("Kunde inte markera filmen som borttagen:", e);
-                window.showToast("Kunde inte uppdatera filmen.", "error");
             }
         };
 
@@ -11327,6 +11308,7 @@ window.removeWishlistItem = async (id, btnElement) => {
 
                 // Sortera så att nyaste ligger överst
                 const sortedAlerts = snapshot.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.timestamp - a.timestamp);
+                window._alertsCache = new Map(sortedAlerts.map(a => [a.id, a]));
 
                 sortedAlerts.forEach(data => {
                     const id = data.id;
@@ -11347,11 +11329,6 @@ window.removeWishlistItem = async (id, btnElement) => {
                         iconColor = "text-amber-400";
                         bgColor = "bg-amber-500/10 border-amber-500/20";
                         typeText = "Nytt Prisförslag";
-                    } else if (data.type === 'expiry') {
-                        icon = "alarm-clock";
-                        iconColor = "text-red-400";
-                        bgColor = "bg-red-500/10 border-red-500/20";
-                        typeText = "Annonsen har gått ut (2 månader)";
                     } else if (data.type === 'packaging_low') {
                         icon = "box";
                         iconColor = "text-orange-400";
@@ -11367,6 +11344,11 @@ window.removeWishlistItem = async (id, btnElement) => {
                         iconColor = "text-red-400";
                         bgColor = "bg-red-500/10 border-red-500/20";
                         typeText = "Annonsen har gått ut - vill du förnya?";
+                    } else if (data.type === 'tradera_sale') {
+                        icon = "party-popper";
+                        iconColor = "text-emerald-400";
+                        bgColor = "bg-emerald-500/10 border-emerald-500/20";
+                        typeText = "Sålt på Tradera!";
                     }
 
                     let actionButtons = `
@@ -11378,16 +11360,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                             </button>
                     `;
 
-                    if (data.type === 'expiry') {
-                        actionButtons = `
-                            <button onclick="window.openAndRenewListing(this.dataset.url, this.dataset.movieId, this.dataset.id)" data-url="${escapeHtml(data.url || '')}" data-movie-id="${escapeHtml(data.movieId || '')}" data-id="${escapeHtml(id)}" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Öppna Ej sålda-listan på Tradera och nollställ 2-månadersklockan">
-                                <i data-lucide="external-link" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.markListingRemoved(this.dataset.movieId, this.dataset.id)" data-movie-id="${escapeHtml(data.movieId || '')}" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-orange-500/20 hover:text-orange-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort från Tradera">
-                                <i data-lucide="package-x" class="w-4 h-4"></i>
-                            </button>
-                        `;
-                    } else if (data.type === 'packaging_low') {
+                    if (data.type === 'packaging_low') {
                         // Ingen "öppna"-länk är relevant här - notisen försvinner
                         // ändå automatiskt så fort du fyller på lagret över
                         // gränsen igen. Den här knappen är bara för att slänga
@@ -11413,6 +11386,15 @@ window.removeWishlistItem = async (id, btnElement) => {
                         actionButtons = `
                             <button onclick="window.closeAlertList(); window.openRenewListingModal('${escapeHtml(data.movieId || '')}', '${escapeHtml(data.oldItemId || '')}', this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-red-600 hover:bg-red-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Förnya annonsen">
                                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                    } else if (data.type === 'tradera_sale') {
+                        actionButtons = `
+                            <button onclick="window.closeAlertList(); window.handleSaleAlertClick(this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Fyll i uppgifter">
+                                <i data-lucide="clipboard-check" class="w-4 h-4"></i>
                             </button>
                             <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
                                 <i data-lucide="x" class="w-4 h-4"></i>
