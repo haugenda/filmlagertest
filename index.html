@@ -1600,6 +1600,7 @@
         </div>
     </div>
 
+
     <div id="sell-modal" class="fixed inset-0 z-[110] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
         <div class="bg-gray-900 w-full max-w-md rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col max-h-[95vh] overflow-y-auto">
             <button onclick="window.closeSellModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20">
@@ -11038,7 +11039,59 @@ window.removeWishlistItem = async (id, btnElement) => {
                 window.showToast('Uppgifter ifyllda från Tradera - välj emballage och bekräfta', 'success');
             }
 
+            if (data.shippingType && data.shippingType !== 'Takeaway') {
+                window.showFreightInfo(data.orderId, data.shippingType);
+            }
+
             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertId));
+        };
+
+        window.showFreightInfo = async (orderId, shippingType) => {
+            try {
+                if (shippingType === 'Instabox') {
+                    const res = await fetch(`/.netlify/functions/tradera?path=/orders/${orderId}/shipping-codes`);
+                    const items = res.ok ? await res.json() : [];
+                    const item = (items || [])[0];
+                    const code = item && item.labellessShippingCode;
+                    if (code) {
+                        document.getElementById('instabox-code-display').textContent = code;
+                        document.getElementById('instabox-modal').classList.remove('hidden');
+                        lucide.createIcons();
+                    } else {
+                        window.showToast('Kunde inte hämta Instabox-koden automatiskt - kolla på tradera.se för den här ordern.', 'error');
+                    }
+                } else {
+                    const res = await fetch(`/.netlify/functions/tradera?path=/orders/${orderId}/freight-labels`);
+                    const items = res.ok ? await res.json() : [];
+                    const item = (items || [])[0];
+                    if (item && item.freightLabelContent) {
+                        // Samma beskärning/rotation som redan används för fraktsedlar
+                        // som kommer in via mejl-automationen, avstämt mot din
+                        // riktiga etikettskrivare.
+                        const existingPdfBytes = Uint8Array.from(atob(item.freightLabelContent), c => c.charCodeAt(0));
+                        const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+                        const pages = pdfDoc.getPages();
+                        if (pages.length > 0) {
+                            const firstPage = pages[0];
+                            const cropWidth = 305;
+                            const cropHeight = 545;
+                            const cropX = 0;
+                            const cropY = 190;
+                            firstPage.setCropBox(cropX, cropY, cropWidth, cropHeight);
+                            firstPage.setMediaBox(cropX, cropY, cropWidth, cropHeight);
+                            firstPage.setRotation(PDFLib.degrees(180));
+                            const pdfBytes = await pdfDoc.save();
+                            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                            window.open(URL.createObjectURL(blob), '_blank');
+                        }
+                    } else {
+                        window.showToast('Kunde inte hämta fraktsedeln automatiskt - kolla på tradera.se för den här ordern.', 'error');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                window.showToast('Något gick fel med frakteinfon: ' + e.message, 'error');
+            }
         };
 
         window.openRenewListingModal = async (movieId, oldItemId, alertId) => {
@@ -11221,6 +11274,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                             orderId: match.order.orderId,
                             unitPrice: match.item.unitPrice,
                             shippingCost: match.order.shippingCost,
+                            shippingType: match.order.shippingType || '',
                             zipCode: (match.order.shipTo && match.order.shipTo.zipCode) || '',
                             city: (match.order.shipTo && match.order.shipTo.city) || '',
                             createdDate: match.order.createdDate,
