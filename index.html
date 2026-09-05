@@ -3995,7 +3995,7 @@
         window._traderaLiveLoaded = false;
         window._traderaUnmatchedListings = [];
 
-        window.loadDetailTraderaInfo = async (itemId) => {
+        window.loadDetailTraderaInfo = async (itemId, movieId) => {
             const box = document.getElementById('detail-tradera-info');
             if (!box) return;
             try {
@@ -4035,11 +4035,59 @@
                     html += `<div class="text-xs text-purple-400 mt-1">${escapeHtml(restartText)}</div>`;
                 }
 
+                if (isActive) {
+                    html += `<button onclick="window.endTraderaListing('${escapeHtml(movieId)}', '${itemId}')" class="mt-3 w-full bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 text-xs font-bold py-2 rounded-lg flex justify-center items-center gap-1.5">
+                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Avsluta annons
+                    </button>`;
+                }
+
                 box.innerHTML = html;
                 lucide.createIcons();
             } catch (e) {
                 console.error(e);
                 box.textContent = 'Kunde inte hämta slutdatum från Tradera.';
+            }
+        };
+
+        window.endTraderaListing = async (movieId, itemId) => {
+            const m = movies.find(x => x.id === movieId);
+            if (!m) return;
+
+            // Om filmen ingår i ett paket delar alla filmerna samma annons -
+            // avsluta den avslutar den för alla på en gång, inte bara den här.
+            const packageMovies = m.paketId ? movies.filter(x => x.paketId === m.paketId) : [m];
+            const names = packageMovies.map(x => getExactData(x, 'FILMER') || 'Okänd titel').join(', ');
+            const confirmText = packageMovies.length > 1
+                ? `Det här är ett paket. Avsluta annonsen tar bort den för ALLA filmer i paketet: ${names}. Fortsätta?`
+                : `Avsluta annonsen för "${names}"? Går inte att ångra.`;
+            if (!confirm(confirmText)) return;
+
+            try {
+                const res = await fetch(`/.netlify/functions/tradera?path=/listings/items/${itemId}`, { method: 'DELETE' });
+                if (!res.ok && res.status !== 404) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(traderaErrorMessage(errData, 'HTTP ' + res.status));
+                }
+
+                const batch = writeBatch(db);
+                packageMovies.forEach(x => {
+                    batch.update(doc(moviesCollection, x.id), {
+                        'ANNONS?': 'FALSE',
+                        traderaItemId: deleteField(),
+                        traderaEndDate: deleteField(),
+                        traderaStartDate: deleteField(),
+                        traderaAutoRenew: deleteField(),
+                        paketId: deleteField(),
+                        annonsDate: deleteField(),
+                    });
+                });
+                await batch.commit();
+
+                window.showToast('Annonsen avslutad.', 'success');
+                window.openDetails(movieId, cameFromStats);
+            } catch (e) {
+                console.error(e);
+                window.showToast('Kunde inte avsluta annonsen: ' + e.message, 'error');
             }
         };
 
@@ -7948,7 +7996,7 @@ const verkligtEmballage = hasShipping ? (packCost + dynamicFee) : packCost; // V
                             </button>
                         `;
                         if (isAnnons && !sold && m.traderaItemId) {
-                            window.loadDetailTraderaInfo(m.traderaItemId);
+                            window.loadDetailTraderaInfo(m.traderaItemId, m.id);
                         }
                     }
                 }

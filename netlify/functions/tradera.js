@@ -35,6 +35,8 @@ const ALLOWED = [
   { method: "GET", pattern: /^\/orders\/[\d,]+\/shipping-codes$/, needsUser: true },
   { method: "POST", pattern: /^\/search\/advanced$/, needsUser: false },
   { method: "POST", pattern: /^\/search\/by-fixed-criteria$/, needsUser: false },
+  { method: "GET", pattern: /^\/reference-data\/item-types$/, needsUser: false },
+  { method: "DELETE", pattern: /^\/listings\/items\/\d+$/, needsUser: true },
 ];
 
 exports.handler = async (event) => {
