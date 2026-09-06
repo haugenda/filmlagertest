@@ -11082,8 +11082,16 @@ window.removeWishlistItem = async (id, btnElement) => {
                 priceInput.value = data.unitPrice || '';
                 document.getElementById('sell-shipping-paid').value = data.shippingCost || '';
                 document.getElementById('sell-date').value = data.createdDate ? String(data.createdDate).slice(0, 10) : '';
-                document.getElementById('sell-postal').value = data.zipCode || '';
-                document.getElementById('sell-city').value = data.city || '';
+
+                // Sätta .value programmatiskt triggar inte input-lyssnare -
+                // kör därför uträkningen och postnummer-uppslagningen (som
+                // fyller i både stad och kommun) manuellt, precis som om
+                // du skrivit in värdena själv.
+                window.updateSaleCalculation();
+                const postalInput = document.getElementById('sell-postal');
+                postalInput.value = data.zipCode || '';
+                await handlePostal({ target: postalInput }, 'sell-city', 'sell-municipality', 'postal-warning');
+
                 window.showToast('Uppgifter ifyllda från Tradera - välj emballage och bekräfta', 'success');
             }
 
