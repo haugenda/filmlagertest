@@ -74,37 +74,35 @@
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[1000] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- MAIN APP CONTAINER -->
-    <div id="main-view" class="w-full max-w-md md:max-w-5xl mx-auto bg-gray-950 min-h-screen relative overflow-hidden flex flex-col">
+    <div id="main-view" class="w-full max-w-md md:max-w-[1320px] mx-auto bg-gray-950 min-h-screen relative overflow-hidden flex flex-col">
         
         <!-- HEADER & SEARCH -->
         <header class="bg-gray-900/80 backdrop-blur-md px-4 pt-8 pb-4 sticky top-0 z-10 border-b border-gray-800">
           <div>
-           <div class="flex justify-between items-center mb-5">
-                <div class="flex items-center gap-3">
+            <div class="md:flex md:items-start md:gap-8">
+            <div class="flex flex-col gap-3 md:grid md:grid-cols-[auto_1fr] md:gap-x-3 md:gap-y-1 md:flex-1">
+                <div class="flex items-center gap-3 shrink-0 mb-3 md:mb-0">
                     <h1 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
                         <i data-lucide="film" class="text-blue-500"></i> Filmlager
                     </h1>
                     <!-- NY KNAPP FÖR PACKLISTA -->
-                    <button onclick="window.openPackList()" class="relative ml-3 bg-gray-800 hover:bg-gray-700 p-2 rounded-xl transition-colors border border-gray-700">
+                    <button onclick="window.openPackList()" class="md:hidden relative ml-3 bg-gray-800 hover:bg-gray-700 p-2 rounded-xl transition-colors border border-gray-700">
                         <i data-lucide="package-check" class="w-5 h-5 text-emerald-500"></i>
                         <span id="pack-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg hidden">0</span>
                     </button>
                     <!-- KNAPP FÖR LARM/BETALNINGAR -->
-                    <button onclick="window.openAlertList()" class="relative ml-2 bg-gray-800 hover:bg-gray-700 p-2 rounded-xl transition-colors border border-gray-700">
+                    <button onclick="window.openAlertList()" class="md:hidden relative ml-2 bg-gray-800 hover:bg-gray-700 p-2 rounded-xl transition-colors border border-gray-700">
                         <i data-lucide="bell" class="w-5 h-5 text-amber-500"></i>
                         <span id="alert-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg hidden">0</span>
                     </button>
                     <!-- KNAPP FÖR ÖNSKELISTA / GULDKORN -->
-                    <button onclick="window.openWishlist()" class="relative ml-2 bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-xl transition-colors border border-gray-700 flex items-center gap-1.5 shadow-inner">
+                    <button onclick="window.openWishlist()" class="md:hidden relative ml-2 bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-xl transition-colors border border-gray-700 flex items-center gap-1.5 shadow-inner">
                         <i data-lucide="star" class="w-4 h-4 text-amber-400 fill-amber-400"></i>
                         <span class="text-xs font-bold text-gray-300">Önskelista</span>
                     </button>
-                </div> 
-            </div>
+                </div>
 
-            <div class="md:flex md:items-stretch md:gap-6">
-            <div class="flex flex-col gap-3 md:flex-1">
-                <div class="flex gap-2">
+                <div class="flex gap-2 mb-3 md:mb-0">
                     <div class="relative flex-1">
                         <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5"></i>
                         <input 
@@ -120,14 +118,14 @@
                     <button onclick="window.searchTraderaGlobal()" class="bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 rounded-2xl w-14 shrink-0 transition-colors flex items-center justify-center relative shadow-inner" title="Sök på Tradera (Avslutade)">
                         <i data-lucide="search" class="w-5 h-5"></i>
                     </button>
-                    <button onclick="window.openWorkModeModal()" class="bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 rounded-2xl px-3 py-2 shrink-0 transition-colors flex items-center justify-center gap-1.5 shadow-inner font-bold text-xs relative" title="Arbetslägen">
+                    <button onclick="window.openWorkModeModal()" class="md:hidden bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 rounded-2xl px-3 py-2 shrink-0 transition-colors flex items-center justify-center gap-1.5 shadow-inner font-bold text-xs relative" title="Arbetslägen">
                         <i data-lucide="settings" class="w-4 h-4"></i> Läge
                         <div id="work-mode-active-dot" class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-gray-900 hidden"></div>
                     </button>
                 </div>
-                
-                <div class="flex justify-between items-center gap-2">
-                    <div class="relative flex-1">
+
+                <div class="flex justify-between items-center gap-2 md:col-span-2">
+                    <div class="relative md:w-40 shrink-0">
                         <i data-lucide="arrow-down-up" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                         <select id="main-sort-select" onchange="window.changeSort(this.value)" class="w-full bg-gray-900 text-gray-300 rounded-xl py-2.5 pl-9 pr-8 border border-gray-800 focus:outline-none focus:border-blue-500 text-sm appearance-none cursor-pointer font-medium shadow-inner">
                             <option value="title_asc">Titel (A till Ö)</option>
@@ -151,26 +149,82 @@
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
                     </div>
-                    <button onclick="window.openFilterModal()" class="bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl px-3 py-2.5 shrink-0 transition-colors flex items-center justify-center relative shadow-inner" title="Filtrera">
-                        <i data-lucide="filter" class="w-4 h-4"></i>
-                        <div id="filter-active-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-gray-900 hidden"></div>
-                    </button>
-                    <button id="quick-reset-btn" onclick="window.resetFilters()" class="hidden text-xs font-bold text-red-400 bg-red-400/10 px-3 py-2.5 rounded-xl border border-red-400/20 flex items-center gap-1.5 hover:bg-red-400/20 transition-colors shrink-0">
-                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Återställ
-                    </button>
-                </div>
+                    <div class="hidden md:block md:flex-1 shrink-0 relative">
+                        <button type="button" onclick="window.toggleQuickFilterPanel('media')" id="quick-filter-media-btn" class="w-full text-left bg-gray-900 text-gray-300 rounded-xl py-2.5 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-xs font-medium shadow-inner truncate">Alla format</button>
+                        <div id="quick-filter-media-panel" class="hidden absolute z-30 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-2 space-y-1 max-h-64 overflow-y-auto">
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="DVD" onchange="window.toggleQuickFilterValue('media', this.value)" class="quick-cb-media w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">DVD</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="DVD Steelbook" onchange="window.toggleQuickFilterValue('media', this.value)" class="quick-cb-media w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">DVD Steelbook</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="Blu-ray" onchange="window.toggleQuickFilterValue('media', this.value)" class="quick-cb-media w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Blu-ray</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="Blu-ray Steelbook" onchange="window.toggleQuickFilterValue('media', this.value)" class="quick-cb-media w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Blu-ray Steelbook</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="4K UHD" onchange="window.toggleQuickFilterValue('media', this.value)" class="quick-cb-media w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">4K UHD</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="4K Steelbook" onchange="window.toggleQuickFilterValue('media', this.value)" class="quick-cb-media w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">4K Steelbook</span></label>
+                        </div>
+                    </div>
+                    <div class="hidden md:block md:flex-1 shrink-0 relative">
+                        <button type="button" onclick="window.toggleQuickFilterPanel('genre')" id="quick-filter-genre-btn" class="w-full text-left bg-gray-900 text-gray-300 rounded-xl py-2.5 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-xs font-medium shadow-inner truncate">Alla genrer</button>
+                        <div id="quick-filter-genre-panel" class="hidden absolute z-30 mt-1 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-2 space-y-1 max-h-64 overflow-y-auto">
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="action" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Action/Äventyr</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="komedi" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Komedi</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="thriller" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Thriller/Krim</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="skräck" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Skräck</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="drama" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Drama</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="sci-fi" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Sci-Fi/Fantasy</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="familj" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Familj/Animerat</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="dokumentär" onchange="window.toggleQuickFilterValue('genre', this.value)" class="quick-cb-genre w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Dokumentär</span></label>
+                        </div>
+                    </div>
+                    <div class="hidden md:block md:flex-1 shrink-0 relative">
+                        <button type="button" onclick="window.toggleQuickFilterPanel('decade')" id="quick-filter-decade-btn" class="w-full text-left bg-gray-900 text-gray-300 rounded-xl py-2.5 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-xs font-medium shadow-inner truncate">Alla år</button>
+                        <div id="quick-filter-decade-panel" class="hidden absolute z-30 mt-1 w-40 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-2 space-y-1 max-h-64 overflow-y-auto right-0">
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="2020" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">2020-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="2010" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">2010-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="2000" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">2000-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="1990" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">1990-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="1980" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">1980-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="1970" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">1970-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="1960" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">1960-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="1950" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">1950-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="1940" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">1940-tal</span></label>
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-800 cursor-pointer"><input type="checkbox" value="older" onchange="window.toggleQuickFilterValue('decade', this.value)" class="quick-cb-decade w-3.5 h-3.5 rounded bg-gray-950 border-gray-700 text-blue-500"><span class="text-xs text-gray-300">Före 1940</span></label>
+                        </div>
+                    </div>
+                <button onclick="window.openFilterModal()" class="bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl px-3 py-2.5 shrink-0 transition-colors flex items-center justify-center relative shadow-inner" title="Filtrera">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    <div id="filter-active-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-gray-900 hidden"></div>
+                </button>
+                <button id="quick-reset-btn" onclick="window.resetFilters()" class="hidden text-xs font-bold text-red-400 bg-red-400/10 px-3 py-2.5 rounded-xl border border-red-400/20 flex items-center gap-1.5 hover:bg-red-400/20 transition-colors shrink-0">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Återställ
+                </button>
+            </div>
             </div>
 
-            <div class="md:w-72 md:shrink-0 md:flex md:flex-col md:justify-start">
+            <div class="md:flex md:flex-col md:gap-3 md:items-end">
+            <div class="hidden md:flex md:gap-2 md:justify-end md:w-full">
+                <button onclick="window.openPackList()" class="relative bg-gray-800 hover:bg-gray-700 px-3 py-2.5 rounded-xl transition-colors border border-gray-700 flex items-center gap-2">
+                    <i data-lucide="package-check" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                    <span class="text-xs font-bold text-gray-300 whitespace-nowrap">Packlista</span>
+                    <span id="pack-badge-desktop" class="ml-auto bg-red-500 text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-lg hidden shrink-0">0</span>
+                </button>
+                <button onclick="window.openAlertList()" class="relative bg-gray-800 hover:bg-gray-700 px-3 py-2.5 rounded-xl transition-colors border border-gray-700 flex items-center gap-2">
+                    <i data-lucide="bell" class="w-4 h-4 text-amber-500 shrink-0"></i>
+                    <span class="text-xs font-bold text-gray-300 whitespace-nowrap">Notiser</span>
+                    <span id="alert-badge-desktop" class="ml-auto bg-red-500 text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-lg hidden shrink-0">0</span>
+                </button>
+                <button onclick="window.openWishlist()" class="bg-gray-800 hover:bg-gray-700 px-3 py-2.5 rounded-xl transition-colors border border-gray-700 flex items-center gap-2">
+                    <i data-lucide="star" class="w-4 h-4 text-amber-400 fill-amber-400 shrink-0"></i>
+                    <span class="text-xs font-bold text-gray-300 whitespace-nowrap">Önskelista</span>
+                </button>
+            </div>
+            <div class="md:w-full md:shrink-0">
             <!-- STATS DASHBOARD -->
             <div class="mt-5 md:mt-0 px-1 hidden transition-opacity duration-300" id="dashboard-stats">
-                <div class="flex justify-between items-end mb-2 md:flex-col md:items-end md:gap-3 md:mb-3">
-                    <div class="cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95 text-left md:text-right" onclick="window.toggleInStockFilter()" id="instock-filter-btn" title="Klicka för att visa alla filmer i lagret">
-                        <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center justify-start md:justify-end gap-1 mb-0.5"><i data-lucide="archive" class="w-3 h-3 hidden text-blue-400" id="instock-filter-icon"></i> I lager</span>
+                <div class="flex justify-between items-end mb-2 md:gap-4 md:mb-0">
+                    <div class="cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95 text-left" onclick="window.toggleInStockFilter()" id="instock-filter-btn" title="Klicka för att visa alla filmer i lagret">
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center justify-start gap-1 mb-0.5"><i data-lucide="archive" class="w-3 h-3 hidden text-blue-400" id="instock-filter-icon"></i> I lager</span>
                         <span id="stat-instock" class="text-white font-black text-lg">0</span> <span class="text-gray-500 text-xs">st</span>
                     </div>
-                    <div class="text-center md:text-right cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95" onclick="window.toggleTraderaFilter()" id="tradera-filter-btn" title="Klicka för att visa dina Tradera-annonser">
-                        <span class="text-[10px] text-purple-400/70 uppercase tracking-widest font-bold flex items-center justify-center md:justify-end gap-1 mb-0.5"><i data-lucide="filter" class="w-3 h-3 hidden text-purple-400" id="tradera-filter-icon"></i> På Tradera</span>
+                    <div class="text-center cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95" onclick="window.toggleTraderaFilter()" id="tradera-filter-btn" title="Klicka för att visa dina Tradera-annonser">
+                        <span class="text-[10px] text-purple-400/70 uppercase tracking-widest font-bold flex items-center justify-center gap-1 mb-0.5"><i data-lucide="filter" class="w-3 h-3 hidden text-purple-400" id="tradera-filter-icon"></i> På Tradera</span>
                         <span id="stat-listed" class="text-purple-400 font-black text-lg">0</span> <span class="text-gray-500 text-xs">(<span id="stat-percent">0</span>%)</span>
                     </div>
                     <div class="text-right cursor-pointer p-1.5 -m-1.5 rounded-xl transition-all border border-transparent hover:bg-gray-800/50 active:scale-95" onclick="window.toggleSoldFilter()" id="sold-filter-btn" title="Klicka för att visa dina sålda filmer">
@@ -203,6 +257,7 @@
             </div>
             </div>
             </div>
+            </div>
           </div>
         </header>
 
@@ -212,7 +267,7 @@
         </main>
 
         <!-- FLYGANDE KNAPPAR (FABs) FIXERADE PÅ SKÄRMEN -->
-        <div class="fixed bottom-24 left-1/2 transform -translate-x-1/2 w-full max-w-md md:max-w-5xl pointer-events-none z-[100]">
+        <div class="fixed bottom-24 left-1/2 transform -translate-x-1/2 w-full max-w-md md:max-w-[1320px] pointer-events-none z-[100]">
             <!-- LÄGG TILL FILM FAB -->
             <button id="add-fab" onclick="window.openAddChoiceModal()" class="absolute bottom-0 right-6 pointer-events-auto bg-blue-600 hover:bg-blue-500 text-white rounded-full p-4 shadow-[0_4px_20px_rgba(37,99,235,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center border border-blue-400/30">
                 <i data-lucide="plus" class="w-6 h-6"></i>
@@ -243,19 +298,14 @@
                 <button onclick="window.clearSellBasket()" class="bg-gray-800/70 hover:bg-red-500/20 text-gray-500 hover:text-red-400 p-2 rounded-full shadow border border-gray-700/50 transition-colors flex items-center justify-center w-9 h-9" title="Rensa val">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
-                <div class="flex gap-2">
-                    <button onclick="window.copyPackageAdText()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-full py-3.5 px-5 shadow-lg border border-gray-700 font-bold flex items-center gap-2">
-                        <i data-lucide="copy" class="w-5 h-5"></i> Text
-                    </button>
-                    <button onclick="window.openPkgPublishModal()" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full py-3.5 px-5 shadow-[0_4px_20px_rgba(147,51,234,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center border border-purple-400/30 font-bold gap-2">
-                        <i data-lucide="upload-cloud" class="w-5 h-5"></i> Tradera (<span id="package-build-count">0</span>)
-                    </button>
-                </div>
+                <button onclick="window.openPkgPublishModal()" class="bg-purple-600 hover:bg-purple-500 text-white rounded-full py-3.5 px-5 shadow-[0_4px_20px_rgba(147,51,234,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center border border-purple-400/30 font-bold gap-2">
+                    <i data-lucide="upload-cloud" class="w-5 h-5"></i> Tradera (<span id="package-build-count">0</span>)
+                </button>
             </div>
         </div>
 
         <!-- BOTTENMENY -->
-        <nav class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md md:max-w-5xl bg-gray-950/95 backdrop-blur-md border-t border-gray-800 flex justify-around items-center pt-2 pb-5 z-[105]">
+        <nav class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md md:max-w-[1320px] bg-gray-950/95 backdrop-blur-md border-t border-gray-800 flex justify-around items-center pt-2 pb-5 z-[105]">
             <button id="nav-home" onclick="window.switchTab('home')" class="nav-btn flex flex-col items-center gap-1 text-blue-500 transition-colors w-16">
                 <i data-lucide="home" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">Lager</span>
@@ -277,7 +327,7 @@
     </div>
 
     <!-- STATS VIEW -->
-    <div id="stats-view" class="fixed inset-0 w-full max-w-md md:max-w-5xl mx-auto z-[85] hidden bg-gray-950 flex-col slide-in overflow-hidden shadow-2xl border-x border-gray-900 pb-20">
+    <div id="stats-view" class="fixed inset-0 w-full max-w-md md:max-w-none mx-auto z-[85] hidden bg-gray-950 flex-col slide-in overflow-hidden shadow-2xl border-x border-gray-900 pb-20">
         <header class="p-4 bg-gray-900/90 backdrop-blur-md flex gap-3 items-center border-b border-gray-800 z-10 shadow-lg relative">
             <button id="stats-back-btn" onclick="window.closeStats()" class="hidden text-gray-400 hover:text-white p-2 bg-gray-800 rounded-full transition-colors shrink-0">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
@@ -300,14 +350,14 @@
                     <div id="stats-card-total-profit" class="text-2xl font-black text-emerald-400">0 kr</div>
                 </div>
                 <!-- Kassaflöde (Nytt kort) -->
-                <div onclick="window.openStatsDetail('cashflow')" class="col-span-2 bg-gradient-to-br from-amber-900/40 to-amber-800/20 border border-amber-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden cursor-pointer hover:bg-amber-800/30 transition-colors group">
+                <div onclick="window.openStatsDetail('cashflow')" class="col-span-2 md:col-span-1 bg-gradient-to-br from-amber-900/40 to-amber-800/20 border border-amber-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden cursor-pointer hover:bg-amber-800/30 transition-colors group">
                     <i data-lucide="chevron-right" class="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500/50 group-hover:text-amber-400 transition-colors"></i>
                     <h4 class="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest mb-1 flex items-center gap-1.5"><i data-lucide="wallet" class="w-3.5 h-3.5"></i> Kassaflöde i år</h4>
                     <div id="stats-card-cashflow" class="text-2xl font-black text-amber-400">0 kr</div>
                 </div>
                 
                 <!-- RESULTATRÄKNING (ALL-TIME) -->
-                <div onclick="window.openStatsDetail('profit')" class="col-span-2 bg-gray-900 border border-gray-800 rounded-3xl p-4 shadow-inner cursor-pointer hover:bg-gray-800 transition-colors group relative mb-3 mt-1 flex items-center gap-3">
+                <div onclick="window.openStatsDetail('profit')" class="col-span-2 md:col-span-1 bg-gray-900 border border-gray-800 rounded-3xl p-4 shadow-inner cursor-pointer hover:bg-gray-800 transition-colors group relative mb-3 mt-1 flex items-center gap-3">
                     <div class="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20"><i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i></div>
                     <div class="flex-1">
                         <h4 class="font-bold text-white text-base leading-tight mb-0.5">Total Ekonomi</h4>
@@ -370,17 +420,17 @@
 
         <!-- TOPPLISTOR SUB-VY -->
         <div id="stats-highest-view" class="hidden flex-1 overflow-y-auto p-4 flex-col">
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl md:max-w-none w-full mx-auto md:px-6">
             <h3 class="font-black text-xl text-white mb-4 flex items-center gap-2 shrink-0">
                 <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Topplistor
             </h3>
 
-            <div class="flex bg-gray-900 rounded-xl p-1 mb-5 border border-gray-800 shrink-0">
+            <div class="flex bg-gray-900 rounded-xl p-1 mb-5 border border-gray-800 shrink-0 md:max-w-md md:mx-auto">
                 <button onclick="window.switchHighestCategory('profit')" id="btn-cat-profit" class="flex-1 py-2 text-sm font-bold rounded-lg bg-gray-800 text-white shadow transition-all">Nettovinst</button>
                 <button onclick="window.switchHighestCategory('margin')" id="btn-cat-margin" class="flex-1 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-gray-300 transition-all">Nettomarginal</button>
             </div>
 
-            <div class="space-y-5 pb-6">
+            <div class="space-y-5 md:space-y-0 md:grid md:grid-cols-2 md:gap-5 md:items-start pb-6">
                 <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4 shadow-inner">
                     <h4 id="highest-list-title" class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2">Högst Nettovinst</h4>
                     <div id="highest-top-list" class="space-y-1"></div>
@@ -396,12 +446,14 @@
 
         <!-- PROFIT (VINST) SUB-VY -->
         <div id="stats-profit-view" class="hidden flex-1 overflow-y-auto p-4 flex-col">
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl md:max-w-none w-full mx-auto md:px-6">
             <h3 class="font-black text-xl text-white mb-4 flex items-center gap-2 shrink-0">
                 <i data-lucide="trending-up" class="w-6 h-6 text-emerald-500"></i> Din Ekonomi
             </h3>
 
-            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-5">
+            <div class="md:flex md:gap-6">
+            <div class="md:w-96 md:shrink-0 md:flex md:flex-col">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-5 md:mb-0 md:flex-1">
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-gray-800 pb-2">Resultaträkning</h4>
                 <div class="space-y-2 text-sm mb-4">
                     <div class="flex justify-between text-gray-300 font-bold border-b border-gray-800/50 pb-1.5 mb-1.5">
@@ -455,32 +507,36 @@
                     </div>
                 </div>
             </div>
+            </div>
 
-            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner">
+            <div class="md:flex-1 md:min-w-0 md:flex md:flex-col">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner md:flex-1">
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-gray-800 pb-2">Utveckling över tid</h4>
-                <div class="w-full h-48 relative">
+                <div class="w-full h-48 md:h-80 relative">
                     <canvas id="profitChart"></canvas>
                 </div>
                 <p class="text-[10px] text-gray-500 mt-4 text-center leading-tight">Linjen dyker ner vid inköp av nya filmer och klättrar uppåt vid varje försäljning.</p>
+            </div>
+            </div>
             </div>
         </div>
 </div>
 
         <!-- MÅNADSSTATISTIK SUB-VY -->
         <div id="stats-monthly-view" class="hidden flex-1 overflow-y-auto p-4 flex-col">
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl md:max-w-none w-full mx-auto md:px-6">
             <h3 class="font-black text-xl text-white mb-4 flex items-center gap-2 shrink-0">
                 <i data-lucide="calendar" class="w-6 h-6 text-blue-400"></i> Månadsstatistik
             </h3>
 
-            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-5">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Välj år</h4>
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 md:py-4 shadow-inner mb-5 md:flex md:items-center md:gap-6 md:max-w-xl">
+                <div class="flex justify-between items-center mb-4 md:mb-0 md:shrink-0">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest md:mr-4">Välj år</h4>
                     <select id="monthly-year-select" onchange="window.renderMonthlyStats(this.value)" class="bg-gray-950 text-white rounded-xl py-2 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-sm font-bold shadow-inner">
                         <option value="2024">2024</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-4 gap-2 border-t border-gray-800 pt-4">
+                <div class="grid grid-cols-4 gap-2 border-t border-gray-800 pt-4 md:border-t-0 md:pt-0 md:flex md:gap-8">
     <div>
         <span class="block text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">Sålda</span>
         <span id="monthly-year-count" class="text-lg font-black text-white whitespace-nowrap">0 st</span>
@@ -502,31 +558,33 @@
 
             <p class="text-[9px] text-gray-500 -mt-2 mb-4 leading-tight bg-gray-950 p-2 rounded-lg border border-gray-800/50"><i data-lucide="info" class="w-3 h-3 inline text-blue-400 mb-0.5"></i> Visar ren vinst <b>enbart</b> för de filmer som har sålts (Försäljningspris minus inköp, frakt & avgifter för just dessa filmer).</p>
 
-            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-4">
+            <div class="md:grid md:grid-cols-2 md:gap-5">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-4 md:mb-0">
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-gray-800 pb-2">Vinst (Endast sålda)</h4>
-                <div class="w-full h-40 relative">
+                <div class="w-full h-40 md:h-80 relative">
                     <canvas id="monthlyProfitChart"></canvas>
                 </div>
             </div>
 
-            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-6">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-6 md:mb-0">
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 border-b border-gray-800 pb-2">Antal sålda</h4>
-                <div class="w-full h-40 relative">
+                <div class="w-full h-40 md:h-80 relative">
                     <canvas id="monthlyCountChart"></canvas>
                 </div>
+            </div>
             </div>
         </div>
 </div>
 
         <!-- BULKKÖP SUB-VY -->
         <div id="stats-bulk-view" class="hidden flex-1 overflow-y-auto p-4 flex-col">
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl md:max-w-none w-full mx-auto md:px-6">
             <h3 class="font-black text-xl text-white mb-4 flex items-center gap-2 shrink-0">
                 <i data-lucide="boxes" class="w-6 h-6 text-purple-400"></i> Bulkköp & Break-even
             </h3>
             <p class="text-xs text-gray-400 mb-5 leading-relaxed">Följ upp dina bulk-köp och se när lådorna börjar gå med ren vinst. Klicka på en låda för att se innehållet.</p>
             
-            <div id="bulk-stats-list" class="space-y-4 pb-32">
+            <div id="bulk-stats-list" class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start pb-32">
                 <!-- Fylls dynamiskt -->
             </div>
         </div>
@@ -534,30 +592,32 @@
 
         <!-- FORMATSTATISTIK SUB-VY -->
         <div id="stats-format-view" class="hidden flex-1 overflow-y-auto p-4 flex-col">
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl md:max-w-none w-full mx-auto md:px-6">
             <h3 class="font-black text-xl text-white mb-4 flex items-center gap-2 shrink-0">
                 <i data-lucide="disc" class="w-6 h-6 text-blue-400"></i> Mediaformat
             </h3>
-            <p class="text-xs text-gray-400 mb-3 leading-relaxed">Se vilka format som ger dig bäst lönsamhet, nedbrutet på Film/TV-serie/Box. Listan sorteras efter högst värde.</p>
+            <p class="text-xs text-gray-400 mb-3 leading-relaxed md:text-center">Se vilka format som ger dig bäst lönsamhet, nedbrutet på Film/TV-serie/Box. Listan sorteras efter högst värde.</p>
 
-            <div class="flex bg-gray-900 rounded-xl p-1 mb-5 border border-gray-800 shrink-0">
+            <div class="flex bg-gray-900 rounded-xl p-1 mb-5 border border-gray-800 shrink-0 md:max-w-md md:mx-auto">
                 <button onclick="window.setFormatStatsMode('mean')" id="btn-format-mode-mean" class="flex-1 py-2 text-sm font-bold rounded-lg bg-gray-800 text-white shadow transition-all">Snittvinst</button>
                 <button onclick="window.setFormatStatsMode('median')" id="btn-format-mode-median" class="flex-1 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-white transition-all">Median</button>
             </div>
-            <p class="text-[10px] text-gray-500 mb-5 -mt-3 leading-relaxed">Median är mindre känslig för enstaka dyra eller billiga försäljningar och ger ofta en ärligare bild av det "typiska" resultatet.</p>
+            <p class="text-[10px] text-gray-500 mb-5 -mt-3 leading-relaxed md:text-center">Median är mindre känslig för enstaka dyra eller billiga försäljningar och ger ofta en ärligare bild av det "typiska" resultatet.</p>
             
-            <div id="format-stats-list" class="space-y-4 pb-10">
+            <div id="format-stats-list" class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start pb-10">
                 <!-- Fylls dynamiskt -->
             </div>
         </div>
 </div>
         <!-- KASSAFLÖDE SUB-VY -->
-<div id="stats-cashflow-view" class="hidden flex-1 overflow-y-auto p-4 flex-col">
-<div class="max-w-2xl mx-auto">
+<div id="stats-cashflow-view" class="hidden flex-1 overflow-y-auto p-4 flex-col md:min-h-0">
+<div class="max-w-2xl md:max-w-none w-full mx-auto md:px-6 md:h-full md:flex md:flex-col md:min-h-0">
     <h3 class="font-black text-xl text-white mb-4 flex items-center gap-2 shrink-0">
         <i data-lucide="wallet" class="w-6 h-6 text-amber-500"></i> Kassaflöde
     </h3>
     
+    <div class="md:flex md:gap-6 md:flex-1 md:min-h-0">
+    <div class="md:w-96 md:shrink-0">
     <!-- Årsväljare & Uträkning -->
     <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-5">
         <div class="flex justify-between items-center mb-4">
@@ -591,10 +651,14 @@
             </div>
         </div>
     </div>
+    </div>
 
-    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2">Kontohändelser</h4>
-    <div id="cashflow-list" class="space-y-2 pb-10">
+    <div class="md:flex-1 md:min-w-0 md:flex md:flex-col md:min-h-0">
+    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2 md:shrink-0">Kontohändelser</h4>
+    <div id="cashflow-list" class="space-y-2 pb-10 md:pb-2 md:flex-1 md:overflow-y-auto md:min-h-0">
         <!-- Fylls dynamiskt med JavaScript -->
+    </div>
+    </div>
     </div>
 </div>
 </div>
@@ -602,7 +666,7 @@
     </div>
 
     <!-- MAP VIEW -->
-   <div id="map-view" class="fixed inset-0 w-full max-w-md md:max-w-5xl mx-auto z-[85] hidden bg-gray-950 flex-col slide-in overflow-hidden shadow-2xl border-x border-gray-900 pb-20">
+   <div id="map-view" class="fixed inset-0 w-full max-w-md md:max-w-[1320px] mx-auto z-[85] hidden bg-gray-950 flex-col slide-in overflow-hidden shadow-2xl border-x border-gray-900 pb-20">
         <header class="p-4 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-10 shadow-lg flex flex-col gap-3 shrink-0">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-2">
@@ -633,28 +697,19 @@
     </div>
 
     <!-- TOOLS VIEW -->
-    <div id="tools-view" class="fixed inset-0 w-full max-w-md md:max-w-5xl mx-auto z-[85] hidden bg-gray-950 flex-col slide-in overflow-hidden shadow-2xl border-x border-gray-900 pb-20">
-        <header class="p-4 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-10 shadow-lg">
+    <div id="tools-view" class="fixed inset-0 w-full max-w-md md:max-w-[1320px] mx-auto z-[85] hidden bg-gray-950 flex-col slide-in overflow-hidden shadow-2xl border-x border-gray-900 pb-20">
+        <header class="p-4 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 z-10 shadow-lg flex justify-between items-center">
             <h3 class="text-lg font-black text-white flex items-center gap-2"><i data-lucide="wrench" class="text-blue-500 w-5 h-5"></i> Verktyg</h3>
+            <button onclick="window.updateApp()" class="hidden md:flex bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition-colors" title="Uppdatera app">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
         </header>
         <div class="flex-1 overflow-y-auto p-5 space-y-4">
-            <div class="md:grid md:grid-cols-2 md:gap-3">
+            <div class="md:grid md:grid-cols-3 md:gap-3">
             <!-- UPPDATERA APP -->
-            <button onclick="window.updateApp()" class="md:col-span-2 w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl text-sm font-bold transition-colors shadow-lg flex justify-center items-center gap-2 mb-2">
+            <button onclick="window.updateApp()" class="md:hidden w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl text-sm font-bold transition-colors shadow-lg flex justify-center items-center gap-2 mb-2">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i> Uppdatera app
             </button>
-
-         <!-- SMART PAKETGENERATOR INGÅNG -->
-            <div class="md:col-span-2 bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-6 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 bg-purple-500/10 w-24 h-24 rounded-full blur-2xl"></div>
-                <h4 class="text-sm font-bold text-white mb-1 flex items-center gap-2 relative z-10">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i> Smart Paketgenerator
-                </h4>
-                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed relative z-10">Låt algoritmen skanna ditt lager och bygga lönsamma paketförslag automatiskt baserat på skådespelare, genre eller franchise.</p>
-                <button onclick="window.openPackageGenerator()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl text-sm font-bold transition-colors shadow-lg flex justify-center items-center gap-2 relative z-10">
-                    <i data-lucide="package" class="w-4 h-4"></i> Öppna Paketgeneratorn
-                </button>
-            </div>
 
               <!-- SMART HYLLSORTERING -->
             <div onclick="window.openSmartSortModal()" class="bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-3 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
@@ -689,15 +744,23 @@
                 <i data-lucide="chevron-right" class="text-gray-600 group-hover:text-white transition-colors w-4 h-4"></i>
             </button>
 
-            <button onclick="window.openShelfMapModal()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-6 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
+            <button onclick="window.openShelfMapModal()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-3 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
                 <div class="bg-indigo-500/10 p-2 rounded-lg"><i data-lucide="map" class="w-5 h-5 text-indigo-400"></i></div>
                 <div class="flex-1 text-left">
                     <h4 class="font-bold text-white text-sm leading-tight mb-0.5">Hyllkarta</h4>
                 </div>
                 <i data-lucide="chevron-right" class="text-gray-600 group-hover:text-white transition-colors w-4 h-4"></i>
             </button>
-            
-            <h4 class="md:col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 border-b border-gray-800 pb-2">Bokföring & Ekonomi</h4>
+
+            <!-- SMART PAKETGENERATOR (mindre, i rutnätet) -->
+            <div onclick="window.openPackageGenerator()" class="bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-3 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
+                <div class="bg-purple-500/10 p-2 rounded-lg"><i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i></div>
+                <div class="flex-1 text-left">
+                    <h4 class="font-bold text-white text-sm leading-tight mb-0.5">Smart Paketgenerator</h4>
+                </div>
+                <i data-lucide="chevron-right" class="text-gray-600 group-hover:text-white transition-colors w-4 h-4"></i>
+            </div>
+
             <div onclick="window.openExpensesModal()" class="bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-6 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
                 <div class="bg-amber-500/10 p-2 rounded-lg"><i data-lucide="receipt" class="w-5 h-5 text-amber-400"></i></div>
                 <div class="flex-1 text-left">
@@ -705,42 +768,8 @@
                 </div>
                 <i data-lucide="chevron-right" class="text-gray-600 group-hover:text-white transition-colors w-4 h-4"></i>
             </div>
-            <div class="md:col-span-2 bg-gray-900 border border-gray-800 rounded-3xl p-5 shadow-inner mb-6">
-                <h4 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
-                    <i data-lucide="calculator" class="w-4 h-4 text-blue-400"></i> Kalibrera basvärden
-                </h4>
-                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Eftersom dina gamla sålda filmer saknar kundfrakt i databasen kan du skriva in dina historiska målsummor här från ditt Tradera-ark. Appen räknar ut de dolda mellanskillnaderna automatiskt.</p>
-                
-                <div class="space-y-4">
-                    <!-- ALL-TIME -->
-                    <div>
-                        <label class="block text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1.5">Verklig Total Omsättning (Sedan start)</label>
-                        <div class="relative">
-                            <input type="number" id="tools-target-revenue" placeholder="T.ex. 20529" class="w-full bg-gray-950 text-white rounded-xl py-3 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-sm font-bold shadow-inner">
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">kr</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1.5">Verklig Total Fraktintäkt (Sedan start)</label>
-                        <div class="relative">
-                            <input type="number" id="tools-target-shipping" placeholder="T.ex. 8346" class="w-full bg-gray-950 text-white rounded-xl py-3 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-sm font-bold shadow-inner">
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">kr</span>
-                        </div>
-                    </div>
-                    <!-- NYTT: ÅRETS OMSÄTTNING -->
-                    <div class="pt-3 border-t border-gray-800">
-                        <label class="block text-[10px] text-blue-400 uppercase tracking-widest font-bold mb-1.5">Årets Omsättning (Hittills innan appen)</label>
-                        <div class="relative">
-                            <input type="number" id="tools-target-yearly-revenue" placeholder="T.ex. 5000" class="w-full bg-gray-950 text-white rounded-xl py-3 px-3 border border-blue-500/30 focus:outline-none focus:border-blue-500 text-sm font-bold shadow-inner">
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">kr</span>
-                        </div>
-                        <p class="text-[9px] text-gray-500 mt-1">Denna summa plussas på din mätare för "Omsättning i år".</p>
-                    </div>
-                    <button onclick="window.calibrateRevenue()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl text-sm font-bold transition-colors shadow-lg flex justify-center items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Spara & kalibrera ekonomi</button>
-                </div>
-            </div>
 
-            <h4 class="md:col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 border-b border-gray-800 pb-2">Datahantering</h4>
+            <h4 class="md:col-span-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 border-b border-gray-800 pb-2">Datahantering</h4>
             
             <button onclick="window.openImportModal()" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 shadow-inner mb-3 cursor-pointer hover:bg-gray-800 transition-colors group relative flex items-center gap-3">
                 <div class="bg-purple-500/10 p-2 rounded-lg"><i data-lucide="database" class="w-5 h-5 text-purple-400"></i></div>
@@ -845,14 +874,16 @@
 
     <!-- FILTER MODAL -->
     <div id="filter-modal" class="fixed inset-0 z-[110] hidden justify-center items-end sm:items-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
-        <div class="bg-gray-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-gray-800 shadow-2xl relative flex flex-col slide-up max-h-[85vh]">
+        <div class="bg-gray-900 w-full max-w-md md:max-w-2xl rounded-t-3xl sm:rounded-3xl border border-gray-800 shadow-2xl relative flex flex-col slide-up max-h-[85vh] md:max-h-[92vh]">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/90 backdrop-blur z-10 rounded-t-3xl">
                 <h3 class="text-lg font-black text-white ml-2 flex items-center gap-2"><i data-lucide="filter" class="w-5 h-5 text-blue-500"></i> Filtrera</h3>
                 <button onclick="window.closeFilterModal()" class="text-gray-500 hover:text-white transition-colors bg-gray-800 p-2 rounded-full">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="overflow-y-auto p-5 space-y-6">
+            <div class="overflow-y-auto p-5 space-y-6 md:space-y-0">
+              <div class="md:flex md:gap-6">
+              <div class="md:flex-1 md:min-w-0 space-y-6 md:space-y-4">
                 <!-- Status & Skyddade (Enkelval) -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Status & Inställningar</label>
@@ -876,10 +907,29 @@
                     </div>
                 </div>
 
+                <!-- Årtionde (Flerval) -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Årtionde (Välj flera)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="2020" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">2020-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="2010" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">2010-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="2000" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">2000-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1990" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1990-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1980" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1980-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1970" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1970-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1960" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1960-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1950" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1950-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1940" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1940-tal</span></label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="older" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">Före 1940</span></label>
+                    </div>
+                </div>
+              </div>
+
+              <div class="md:w-72 md:shrink-0 space-y-6 md:space-y-4 mt-6 md:mt-0">
                 <!-- Typ (Flerval) -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Format (Välj flera)</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-3 md:grid-cols-2 gap-2">
                         <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="film" class="filter-cb-format w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">Film</span></label>
                         <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="tv" class="filter-cb-format w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">TV-serie</span></label>
                         <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="box" class="filter-cb-format w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">Box</span></label>
@@ -913,23 +963,8 @@
                         <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="dokumentär" class="filter-cb-genre w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">Dokumentär</span></label>
                     </div>
                 </div>
-
-                <!-- Årtionde (Flerval) -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Årtionde (Välj flera)</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="2020" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">2020-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="2010" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">2010-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="2000" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">2000-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1990" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1990-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1980" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1980-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1970" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1970-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1960" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1960-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1950" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1950-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="1940" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">1940-tal</span></label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-gray-800 bg-gray-950 cursor-pointer hover:bg-gray-800 transition-colors"><input type="checkbox" value="older" class="filter-cb-decade w-4 h-4 rounded bg-gray-900 border-gray-700 text-blue-500"><span class="text-xs font-bold text-gray-300">Före 1940</span></label>
-                    </div>
-                </div>
+              </div>
+              </div>
             </div>
                 
             <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0 flex gap-3">
@@ -1185,30 +1220,31 @@
 
     <!-- DETAIL VIEW -->
     <div id="detail-view" class="fixed inset-0 z-[100] hidden justify-center">
-        <div class="w-full max-w-md md:max-w-5xl bg-gray-950 h-full flex flex-col relative">
-            <button onclick="window.handleDetailBack()" class="absolute top-6 left-4 z-20 bg-black/50 backdrop-blur-md p-2.5 rounded-full text-white hover:bg-black/70 transition-colors">
-                <i data-lucide="arrow-left" class="w-6 h-6"></i>
-            </button>
-
-            <!-- NY: Hänglås för att skydda från Paketgeneratorn -->
-            <button id="detail-lock-btn" onclick="window.togglePackageLock()" class="absolute top-6 right-16 z-20 bg-gray-900/90 backdrop-blur-md p-2.5 rounded-full text-gray-400 hover:text-amber-400 transition-colors shadow-lg border border-gray-700">
-                <i data-lucide="unlock" class="w-6 h-6"></i>
-            </button>
-
-            <button id="detail-defect-btn" onclick="window.toggleDefect()" class="absolute top-6 right-28 z-20 bg-gray-900/90 backdrop-blur-md p-2.5 rounded-full text-gray-400 hover:text-red-400 transition-colors shadow-lg border border-gray-700" title="Markera som defekt">
-                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-            </button>
-            
-            <button onclick="window.openEditModal()" class="absolute top-6 right-4 z-20 bg-blue-600/90 backdrop-blur-md p-2.5 rounded-full text-white hover:bg-blue-600 transition-colors shadow-lg border border-blue-400/30">
-                <i data-lucide="edit-3" class="w-6 h-6"></i>
-            </button>
-
+        <div class="w-full max-w-md md:max-w-[1320px] bg-gray-950 h-full flex flex-col relative">
             <div id="detail-scroll-container" class="flex-1 overflow-y-auto pb-28">
-              <div class="max-w-2xl mx-auto">
-                <div class="relative w-full bg-gray-900/40 flex justify-center pt-20 pb-6 border-b border-gray-800/50">
-                  <img id="detail-poster" src="" alt="Poster" class="h-80 w-auto object-contain rounded-lg shadow-2xl cursor-pointer hover:scale-105 transition-transform" onerror="this.onerror=null; this.src=window.FALLBACK_IMG" onclick="window.openPosterModal(this.src)">
+              <div class="sticky top-0 z-20 bg-gray-950/95 backdrop-blur-md border-b border-gray-800/50"><div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+                <button onclick="window.handleDetailBack()" class="bg-gray-900 p-2.5 rounded-full text-white hover:bg-gray-800 transition-colors border border-gray-800">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <div class="flex items-center gap-2">
+                    <!-- NY: Hänglås för att skydda från Paketgeneratorn -->
+                    <button id="detail-lock-btn" onclick="window.togglePackageLock()" class="bg-gray-900 p-2.5 rounded-full text-gray-400 hover:text-amber-400 transition-colors shadow-lg border border-gray-700">
+                        <i data-lucide="unlock" class="w-6 h-6"></i>
+                    </button>
+                    <button id="detail-defect-btn" onclick="window.toggleDefect()" class="bg-gray-900 p-2.5 rounded-full text-gray-400 hover:text-red-400 transition-colors shadow-lg border border-gray-700" title="Markera som defekt">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="window.openEditModal()" class="bg-blue-600 p-2.5 rounded-full text-white hover:bg-blue-500 transition-colors shadow-lg border border-blue-400/30">
+                        <i data-lucide="edit-3" class="w-6 h-6"></i>
+                    </button>
                 </div>
-                <div class="px-5 pt-6 relative z-10">
+              </div>
+              </div>
+              <div class="max-w-6xl mx-auto md:flex md:gap-6 md:pt-6 md:px-5">
+                <div class="relative w-full bg-gray-900/40 flex justify-center pt-6 pb-6 border-b border-gray-800/50 md:bg-transparent md:border-0 md:pt-0 md:pb-0 md:w-80 md:shrink-0 md:block md:h-fit">
+                  <img id="detail-poster" src="" alt="Poster" class="h-80 w-auto object-contain rounded-lg shadow-2xl cursor-pointer hover:scale-105 transition-transform md:h-auto md:w-full" onerror="this.onerror=null; this.src=window.FALLBACK_IMG" onclick="window.openPosterModal(this.src)">
+                </div>
+                <div class="px-5 pt-6 relative z-10 md:px-0 md:pt-0 md:flex-1 md:min-w-0">
                     <h2 class="text-3xl font-black text-white leading-tight mb-1" id="detail-title">Titel</h2>
                     <p class="text-blue-400 font-bold mb-4" id="detail-year">(År)</p>
                     <div class="flex flex-wrap gap-2 mb-6 items-center">
@@ -1229,12 +1265,14 @@
                         <i data-lucide="sticky-note" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
                         <p id="detail-notes-text" class="text-xs text-amber-200/90 whitespace-pre-wrap leading-relaxed flex-1 font-medium"></p>
                     </div>
-                    <div class="space-y-3 text-sm border-t border-gray-800 pt-5 mb-6">
+                    <div class="space-y-3 text-sm border-t border-gray-800 pt-5 mb-6 md:mb-0">
                         <div class="flex gap-4"><span class="text-gray-500 w-24 shrink-0">Regissör</span><span class="text-gray-200 font-medium" id="detail-director">Regissör</span></div>
                         <div class="flex gap-4"><span class="text-gray-500 w-24 shrink-0">Skådespelare</span><span class="text-gray-200 font-medium leading-relaxed" id="detail-actors">Skådespelare</span></div>
                     </div>
-                    
+                    <div id="detail-extra-info" class="hidden md:block space-y-3"></div>
+                </div>
 
+                <div class="px-5 md:px-0 md:w-80 md:shrink-0 md:mt-14">
                     <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Försäljningsdata</h3>
                     <div id="financial-box" class="bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-lg relative overflow-hidden"></div>
                 </div>
@@ -1256,7 +1294,7 @@
 
     <!-- EDIT MOVIE MODAL -->
     <div id="edit-modal" class="fixed inset-0 z-[110] hidden justify-center items-center bg-black/90 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 w-full max-w-md rounded-3xl border border-gray-800 shadow-2xl relative flex flex-col h-[90vh] max-h-[850px] overflow-hidden">
+        <div class="bg-gray-900 w-full max-w-md md:max-w-4xl rounded-3xl border border-gray-800 shadow-2xl relative flex flex-col h-[90vh] md:h-[98vh] max-h-[850px] md:max-h-[1050px] overflow-hidden">
             <div class="p-4 border-b border-gray-800 shrink-0 flex items-center justify-between bg-gray-900/90 backdrop-blur z-10 rounded-t-3xl">
                 <h3 class="text-lg font-black text-white ml-2 flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-blue-500"></i> Redigera Data</h3>
                 <button onclick="window.closeEditModal()" class="text-gray-500 hover:text-white transition-colors bg-gray-900 p-2 rounded-full">
@@ -1264,7 +1302,9 @@
                 </button>
             </div>
             
-            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+            <div class="flex-1 overflow-y-auto p-5 space-y-6 md:space-y-0">
+              <div class="md:flex md:gap-6">
+              <div class="md:flex-1 md:min-w-0">
                 <!-- Sektion: Allmänt -->
                 <div>
                     <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2 mb-3">Allmänt</h4>
@@ -1335,7 +1375,9 @@
                         </label>
                     </div>
                 </div>
+              </div>
 
+              <div class="md:w-72 md:shrink-0 mt-6 md:mt-0">
                 <!-- Sektion: Inköpsdata -->
                 <div>
                     <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2 mb-3">Inköpsdata</h4>
@@ -1360,9 +1402,9 @@
                 </div>
 
                 <!-- Sektion: Försäljningsdata -->
-                <div>
+                <div class="mt-6 md:mt-4">
                     <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2 mb-3">Försäljningsdata</h4>
-                    <p class="text-[10px] text-gray-600 mb-3 leading-tight">Lämna dessa fält tomma om filmen inte är såld än. Fyller du i ett pris över 0 kr räknas filmen automatiskt som såld.</p>
+                    <p class="text-[10px] text-gray-600 mb-3 md:mb-1.5 leading-tight">Lämna dessa fält tomma om filmen inte är såld än. Fyller du i ett pris över 0 kr räknas filmen automatiskt som såld.</p>
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="block text-[10px] text-gray-400 mb-1">Sålt för (kr)</label>
@@ -1401,6 +1443,8 @@
                         </div>
                     </div>
                 </div>
+              </div>
+              </div>
             </div>
             <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0 flex gap-3">
                 <button onclick="window.deleteMovie()" id="btn-delete-movie" class="w-1/3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-3.5 rounded-xl transition-colors border border-red-500/20 flex justify-center items-center gap-2 text-sm">
@@ -1418,7 +1462,7 @@
     <!-- PUBLICERA PÅ TRADERA -->
     <!-- ============================================================ -->
     <div id="publish-modal" class="fixed inset-0 z-[120] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl">
+        <div class="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-lg md:max-w-3xl max-h-[92vh] flex flex-col shadow-2xl">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center shrink-0">
                 <h2 class="font-black text-white text-lg flex items-center gap-2">
                     <i data-lucide="upload-cloud" class="w-5 h-5 text-purple-400"></i> Publicera på Tradera
@@ -1427,7 +1471,9 @@
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <div id="publish-modal-body" class="p-4 overflow-y-auto space-y-4 flex-1">
+            <div id="publish-modal-body" class="p-4 overflow-y-auto space-y-4 md:space-y-0 flex-1">
+              <div class="md:flex md:gap-5">
+              <div class="md:w-64 md:shrink-0 space-y-4">
                 <!-- Bilder -->
                 <div>
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Bilder (välj 1-4)</label>
@@ -1436,22 +1482,6 @@
                         <i data-lucide="image-plus" class="w-4 h-4"></i> Välj bilder från din enhet
                     </button>
                     <div id="publish-image-picker" class="grid grid-cols-2 gap-2 mt-2"></div>
-                </div>
-
-                <!-- Titel -->
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Titel</label>
-                    <input type="text" id="publish-title" maxlength="65" placeholder="Skrivs in automatiskt för en film, annars fyller du i själv" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700">
-                </div>
-
-                <!-- Pris -->
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Pris (kr)</label>
-                    <div class="flex gap-2 mt-1">
-                        <input type="number" id="publish-price" class="flex-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700" placeholder="0">
-                        <button id="publish-price-history-btn" onclick="window.checkOwnPriceHistory()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 rounded-xl text-xs font-bold whitespace-nowrap">Kolla tidigare pris</button>
-                    </div>
-                    <div id="publish-price-history" class="mt-2 text-xs text-gray-400 hidden"></div>
                 </div>
 
                 <!-- Skick -->
@@ -1470,6 +1500,30 @@
                         <option value="302602">Blu-ray</option>
                         <option value="1001255">4K UHD</option>
                     </select>
+                </div>
+
+                <!-- Beskrivning -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Beskrivning</label>
+                    <textarea id="publish-description" rows="8" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700 text-sm leading-relaxed"></textarea>
+                </div>
+              </div>
+
+              <div class="md:flex-1 md:min-w-0 space-y-4">
+                <!-- Titel -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Titel</label>
+                    <input type="text" id="publish-title" maxlength="65" placeholder="Skrivs in automatiskt för en film, annars fyller du i själv" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700">
+                </div>
+
+                <!-- Pris -->
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Pris (kr)</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="number" id="publish-price" class="flex-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700" placeholder="0">
+                        <button id="publish-price-history-btn" onclick="window.checkOwnPriceHistory()" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 px-3 rounded-xl text-xs font-bold whitespace-nowrap">Kolla tidigare pris (Tradera)</button>
+                    </div>
+                    <div id="publish-price-history" class="mt-2 text-xs text-gray-400 hidden"></div>
                 </div>
 
                 <!-- Köparregion -->
@@ -1521,12 +1575,8 @@
                         <button id="publish-autorenew-no" onclick="window.setPublishAutoRenew(false)" class="flex-1 bg-gray-800 border border-gray-700 text-gray-300 py-2 rounded-xl text-sm font-bold transition-colors ring-2 ring-purple-500">Nej</button>
                     </div>
                 </div>
-
-                <!-- Beskrivning -->
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wide">Beskrivning</label>
-                    <textarea id="publish-description" rows="8" class="w-full mt-1 bg-gray-800 text-white rounded-xl py-2.5 px-3 border border-gray-700 text-sm leading-relaxed"></textarea>
-                </div>
+              </div>
+              </div>
 
                 <div id="publish-status" class="hidden text-sm rounded-xl p-3"></div>
             </div>
@@ -1627,20 +1677,25 @@
 
 
     <div id="sell-modal" class="fixed inset-0 z-[110] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 w-full max-w-md rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col max-h-[95vh] overflow-y-auto">
+        <div class="bg-gray-900 w-full max-w-md md:max-w-2xl rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col max-h-[95vh] overflow-y-auto">
             <button onclick="window.closeSellModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <h3 class="text-xl font-black text-white mb-4 flex items-center gap-2">
                 <i data-lucide="tag" class="w-5 h-5 text-emerald-500"></i> Markera som såld
             </h3>
-            <div class="flex gap-3 items-center bg-gray-950 p-3 rounded-xl border border-gray-800 mb-6">
-                <img id="sell-poster" src="" class="w-12 h-18 object-cover rounded-lg shadow-sm" alt="Poster" onerror="this.onerror=null; this.src=window.FALLBACK_IMG">
+            <div class="md:flex md:gap-6">
+            <div class="md:w-72 md:shrink-0">
+            <div class="flex gap-3 items-center mb-4 md:flex-col md:items-stretch md:text-center">
+                <img id="sell-poster" src="" class="w-20 h-30 object-cover rounded-lg shadow-sm md:w-auto md:h-64 md:max-w-full md:mx-auto md:object-contain md:mb-3" alt="Poster" onerror="this.onerror=null; this.src=window.FALLBACK_IMG">
                 <div>
                     <h4 id="sell-title" class="font-bold text-gray-100 leading-tight">Titel</h4>
                     <p id="sell-year" class="text-xs text-gray-500">År</p>
                 </div>
             </div>
+            <div id="sell-calc-anchor-desktop"></div>
+            </div>
+            <div class="md:flex-1 md:min-w-0">
             <div class="space-y-4 mb-6">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -1696,7 +1751,8 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-950 rounded-xl p-4 border border-gray-800 mb-6">
+            <div id="sell-calc-anchor-mobile"></div>
+            <div id="sell-calc-box" class="bg-gray-950 rounded-xl p-4 border border-gray-800 mb-6">
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2">Kalkyl</h4>
                 <div id="single-calc-breakdown" class="space-y-1 text-sm mb-3">
                     <!-- Fylls dynamiskt av JS -->
@@ -1709,25 +1765,42 @@
             <button onclick="window.confirmSale()" id="confirm-sale-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg flex justify-center items-center gap-2">
                 <i data-lucide="check-circle" class="w-5 h-5"></i> Bekräfta försäljning
             </button>
+            </div>
+            </div>
         </div>
     </div>
 
     <!-- PACKAGE SALE MODAL -->
     <div id="package-sell-modal" class="fixed inset-0 z-[110] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 w-full max-w-md rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col max-h-[95vh] overflow-hidden">
+        <div class="bg-gray-900 w-full max-w-md md:max-w-5xl rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col h-auto md:h-[90vh] max-h-[95vh] overflow-hidden">
             <button onclick="window.closePackageModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20 bg-gray-900 rounded-full p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
             <h3 class="text-xl font-black text-white mb-4 flex items-center gap-2 shrink-0"><i data-lucide="package" class="w-5 h-5 text-emerald-500"></i> Sälj Paket</h3>
             
-            <div class="overflow-y-auto flex-1 pr-1 pb-4 custom-scrollbar">
-                <div id="package-poster-collage" class="flex justify-center -space-x-4 mb-6 pt-2 pb-2"></div>
-                
+            <div class="overflow-y-auto flex-1 pr-1 pb-4 custom-scrollbar md:min-h-0">
+              <div id="pkg-mobile-top-anchor"></div>
+              <div class="md:flex md:gap-6 md:min-h-0 md:h-full">
+              <div class="md:flex-1 md:min-w-0 md:flex md:flex-col">
+                <div id="pkg-desktop-anchor-left"></div>
+                <div id="pkg-individual-container" class="bg-gray-950 rounded-2xl p-4 border border-gray-800 mb-6 shadow-inner md:flex-1 md:flex md:flex-col md:min-h-0">
+                    <h4 id="pkg-individual-header" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2 md:shrink-0">Individuella priser</h4>
+                    <div id="package-movies-container" class="space-y-4 md:flex-1 md:overflow-y-auto md:pr-1 md:min-h-0"></div>
+                </div>
+
+                <div id="pkg-bundle-list-container" class="hidden bg-gray-950 rounded-2xl p-4 border border-gray-800 mb-6 shadow-inner md:flex-1 md:flex md:flex-col md:min-h-0">
+                    <h4 id="pkg-bundle-header" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2 md:shrink-0">Filmer i paketet</h4>
+                    <div id="pkg-bundle-movielist" class="space-y-2 md:flex-1 md:overflow-y-auto md:pr-1 md:min-h-0"></div>
+                </div>
+              </div>
+
+              <div class="md:w-72 md:shrink-0">
+                <div id="pkg-desktop-anchor-right"></div>
                 <!-- BUNTNINGS-RUTA -->
-                <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 mb-5">
-                    <label class="flex items-center gap-3 cursor-pointer mb-3 select-none">
+                <div id="pkg-bunting-box" class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-3 mb-5">
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
                         <input type="checkbox" id="pkg-is-single-ad" class="w-5 h-5 rounded border-gray-700 bg-gray-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-900 transition-colors" onchange="window.toggleSingleAdMode()">
                         <span class="text-sm font-bold text-blue-400">Såld som EN gemensam annons</span>
                     </label>
-                    <div id="pkg-single-ad-container" class="relative hidden">
+                    <div id="pkg-single-ad-container" class="relative hidden mt-3">
                         <label class="block text-[10px] font-bold text-blue-400/80 uppercase tracking-wider mb-1.5">Totalpris för hela paketet</label>
                         <div class="relative">
                             <input type="number" id="pkg-total-distribute" placeholder="T.ex. 100" class="w-full bg-gray-950 text-white rounded-xl py-2.5 px-3 border border-gray-800 focus:outline-none focus:border-blue-500 text-sm font-bold shadow-inner" oninput="window.autoDistributePackagePrice()">
@@ -1737,13 +1810,7 @@
                     </div>
                 </div>
 
-                <div id="pkg-individual-container" class="bg-gray-950 rounded-2xl p-4 border border-gray-800 mb-6 shadow-inner">
-                    
-                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2">Individuella priser</h4>
-                    <div id="package-movies-container" class="space-y-4"></div>
-                </div>
-
-                <div class="space-y-4 mb-6">
+                <div id="pkg-fields-block" class="space-y-4 mb-6">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Försäljningsdatum</label>
                         <input type="date" id="pkg-sell-date" class="w-full bg-gray-950 text-white rounded-xl py-2.5 px-3 border border-gray-800 focus:outline-none focus:border-emerald-500 text-sm shadow-inner">
@@ -1772,7 +1839,11 @@
                         <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Kommun</label><input type="text" id="pkg-sell-municipality" class="w-full bg-gray-950 text-white rounded-xl py-2.5 px-3 border border-gray-800 text-sm shadow-inner"></div>
                     </div>
                 </div>
-                <div class="bg-gray-950 rounded-2xl p-4 border border-gray-800 shadow-inner">
+              </div>
+
+              <div class="md:w-64 md:shrink-0">
+                <div id="pkg-desktop-anchor-kalkyl"></div>
+                <div id="pkg-kalkyl-box" class="bg-gray-950 rounded-2xl p-4 border border-gray-800 shadow-inner mb-6">
                     <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 border-b border-gray-800 pb-2">Kalkyl (Order Totalt)</h4>
                     <div id="pkg-calc-breakdown" class="space-y-1 text-sm mb-3">
                         <!-- Fylls dynamiskt av JS -->
@@ -1782,8 +1853,11 @@
                         <div class="text-right"><span class="text-gray-500 text-xs block mb-0.5">Total Nettovinst</span><span id="pkg-calc-profit" class="font-black text-2xl text-white">0 kr</span></div>
                     </div>
                 </div>
+                <div id="pkg-btn-anchor-right"></div>
+                <button onclick="window.confirmPackageSale()" id="confirm-package-btn" class="w-full shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 mt-2 rounded-xl transition-colors shadow-lg flex justify-center items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> Bekräfta Paket-order</button>
+              </div>
+              </div>
             </div>
-            <button onclick="window.confirmPackageSale()" id="confirm-package-btn" class="w-full shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 mt-2 rounded-xl transition-colors shadow-lg flex justify-center items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> Bekräfta Paket-order</button>
         </div>
     </div>
     
@@ -1841,13 +1915,15 @@
 
     <!-- PACKAGING SETTINGS MODAL -->
     <div id="packaging-modal" class="fixed inset-0 z-[110] hidden justify-center items-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-gray-900 w-full max-w-md rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col max-h-[90vh]">
+        <div class="bg-gray-900 w-full max-w-md md:max-w-4xl rounded-3xl p-6 border border-gray-800 shadow-2xl relative flex flex-col max-h-[90vh]">
             <button onclick="window.closePackagingModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-20">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <h3 class="text-xl font-black text-white mb-4 flex items-center gap-2"><i data-lucide="box" class="w-5 h-5 text-amber-500"></i> Emballage-verktyg</h3>
 
-            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div class="md:flex md:gap-6">
+              <div class="md:w-96 md:shrink-0 space-y-6">
                 <!-- Avgift -->
                 <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800 shadow-inner">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Standard Emballage-avgift</label>
@@ -1896,7 +1972,9 @@
                         </div>
                     </div>
                 </div>
+              </div>
 
+              <div class="md:flex-1 md:min-w-0 mt-6 md:mt-0">
                 <!-- Emballagetyper -->
                 <div>
                     <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 border-b border-gray-800 pb-2">Emballagetyper</h4>
@@ -1919,6 +1997,8 @@
                         </div>
                     </div>
                 </div>
+              </div>
+              </div>
             </div>
 
             <div class="pt-4 mt-4 border-t border-gray-800">
@@ -2359,6 +2439,7 @@
         let postalMap = {}; 
         let isAdMode = false;
         let selectedPackageIds = new Set();
+        let selectedSellIds = new Set(); // Separat markering för "Sälj"-knappen på desktop
         let currentSellMovieId = null;
         let currentDetailMovieId = null; 
         let currentPurchasePrice = 0;
@@ -3239,15 +3320,48 @@
                 let profit = sold ? (parseFloat(String(getExactData(movie, 'NETTOVINST') || 0).replace(',', '.')) || 0) : 0;
                 let pPrice = getExactData(movie, 'KÖPT FÖR') || 0;
                 
-                let priceSection = sold ? `<span class="${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}"><i data-lucide="${profit >= 0 ? 'trending-up' : 'trending-down'}" class="w-4 h-4 inline"></i> ${profit > 0 ? '+' : ''}${profit} kr</span>` :
-                                                         `<span><i data-lucide="tag" class="w-4 h-4 inline"></i> ${pPrice} kr</span>`;
+                let priceSection = sold ? `<span class="${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}"><i data-lucide="${profit >= 0 ? 'trending-up' : 'trending-down'}" class="w-4 h-4 inline"></i> Vinst: ${profit > 0 ? '+' : ''}${profit} kr</span>` :
+                                                         `<span><i data-lucide="tag" class="w-4 h-4 inline"></i> Inköpspris: ${pPrice} kr</span>`;
 
                 const isSelected = selectedPackageIds.has(movie.id);
+                const isSelectedSell = selectedSellIds.has(movie.id);
+
+                // NY: Alltid synlig knapprad på desktop, ersätter arbetslägena där
+                let desktopActionsHtml = '';
+                if (!sold) {
+                    const sellBtnDesktop = isSelectedSell
+                        ? `<button onclick="event.stopPropagation(); window.toggleSellMarking('${movie.id}')" class="bg-emerald-600 text-white p-2 rounded-lg transition-colors shadow border border-emerald-500" title="Ta bort från säljmarkering"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>`
+                        : `<button onclick="event.stopPropagation(); window.toggleSellMarking('${movie.id}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 p-2 rounded-lg transition-colors border border-emerald-500/20" title="Markera för att sälja"><i data-lucide="tag" class="w-3.5 h-3.5"></i></button>`;
+
+                    const publishBtnDesktop = !isAnnons ? `<button onclick="event.stopPropagation(); window.openPublishModal('${movie.id}')" class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 p-2 rounded-lg transition-colors border border-purple-500/20" title="Publicera på Tradera"><i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i></button>` : '';
+
+                    const packageBtnDesktop = !isAnnons ? (isSelected
+                        ? `<button onclick="event.stopPropagation(); window.toggleMovieSelection('${movie.id}')" class="bg-blue-600 text-white p-2 rounded-lg transition-colors shadow border border-blue-500" title="Ta bort från paketmarkering"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>`
+                        : `<button onclick="event.stopPropagation(); window.toggleMovieSelection('${movie.id}')" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-2 rounded-lg transition-colors border border-blue-500/20" title="Markera för paket"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>`
+                    ) : '';
+
+                    const shelfOptionsDesktop = (window.shelfSettings || []).map(h => `<option value="${escapeHtml(h)}" ${shelf===h?'selected':''}>${escapeHtml(h)}</option>`).join('');
+                    const shelfSelectDesktop = `<select onclick="event.stopPropagation()" onchange="window.quickSetShelf('${movie.id}', this.value)" class="bg-gray-950 text-gray-300 text-xs rounded-lg py-2 px-2 border border-gray-700 focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <option value="" ${!shelf ? 'selected' : ''}>Hylla...</option>
+                        ${shelfOptionsDesktop}
+                        ${shelf && !(window.shelfSettings || []).includes(shelf) ? `<option value="${shelf}" selected>${shelf} (Borttagen)</option>` : ''}
+                    </select>`;
+
+                    desktopActionsHtml = `
+                        <div class="hidden md:flex gap-2 items-center flex-wrap shrink-0" onclick="event.stopPropagation()">
+                            ${sellBtnDesktop}
+                            ${publishBtnDesktop}
+                            ${packageBtnDesktop}
+                            ${shelfSelectDesktop}
+                        </div>
+                    `;
+                }
+
                 let adModeHtml = '';
                 if (window.currentWorkMode === 'ad' && !sold && !isAnnons) {
                     adModeHtml = `
-                        <div class="flex gap-2 mt-3 pt-2 border-t border-gray-800/50">
-                            <button onclick="event.stopPropagation(); window.openPublishModal('${movie.id}')" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-md">
+                        <div class="md:hidden flex gap-2 mt-3 pt-2 border-t border-gray-800/50 md:justify-center">
+                            <button onclick="event.stopPropagation(); window.openPublishModal('${movie.id}')" class="flex-1 md:flex-none md:w-64 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-md">
                                 <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i> Publicera på Tradera
                             </button>
                         </div>
@@ -3268,7 +3382,7 @@
                     if (isSelected) {
                          // Om filmen är markerad för mass-flytt visar vi en gul bock
                          sortModeHtml = `
-                            <div class="mt-3 pt-3 border-t border-gray-800/50 flex justify-between items-center" onclick="event.stopPropagation()">
+                            <div class="md:hidden mt-3 pt-3 border-t border-gray-800/50 flex justify-between items-center" onclick="event.stopPropagation()">
                                 <span class="text-xs text-amber-500 font-bold flex items-center gap-1"><i data-lucide="check-square" class="w-4 h-4"></i> Markerad för mass-flytt</span>
                                 <button onclick="window.toggleMovieSelection('${movie.id}')" class="bg-amber-600 text-white p-2 rounded-xl transition-colors shadow-lg border border-amber-500"><i data-lucide="check" class="w-4 h-4"></i></button>
                             </div>
@@ -3276,7 +3390,7 @@
                     } else {
                          // Annars visar vi rullgardinen, PLUS en knapp för att markera filmen
                          sortModeHtml = `
-                            <div class="mt-3 pt-3 border-t border-gray-800/50 flex gap-2 items-center" onclick="event.stopPropagation()">
+                            <div class="md:hidden mt-3 pt-3 border-t border-gray-800/50 flex gap-2 items-center" onclick="event.stopPropagation()">
                                 <select onchange="window.quickSetShelf('${movie.id}', this.value)" class="flex-1 bg-gray-950 text-amber-400 font-bold rounded-xl py-2 px-3 border border-amber-500/30 focus:outline-none focus:border-amber-500 transition-all text-sm shadow-inner cursor-pointer appearance-none text-center">
                                     <option value="" ${!shelf ? 'selected' : ''}>-- Välj hyllplats --</option>
                                     ${shelfOptions}
@@ -3289,7 +3403,8 @@
                     }
                 }
                 let cleanupModeHtml = '';
-                if (window.currentWorkMode === 'cleanup' && !sold) {
+                let cleanupBadgesDesktopHtml = '';
+                {
                     let badges = [];
                     
                     // Kritisk
@@ -3321,18 +3436,27 @@
                     if (!buyDate || String(buyDate).trim() === '') badges.push('<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Datum saknas</span>');
                     
                     // Logistik
-                    const shelf = getExactData(movie, 'HYLLPLATS');
-                    if (!shelf || String(shelf).trim() === '') badges.push('<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Hylla saknas</span>');
+                    const shelfMissing = getExactData(movie, 'HYLLPLATS');
+                    if (!shelfMissing || String(shelfMissing).trim() === '') badges.push('<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Hylla saknas</span>');
 
-                    if (badges.length > 0) {
-                        cleanupModeHtml = `
-                            <div class="mt-3 pt-3 border-t border-gray-800/50 flex justify-between items-center">
-                                <div class="flex flex-wrap gap-1">
-                                    ${badges.join('')}
+                    if (badges.length > 0 && !sold) {
+                        // Mobil: bara i felsökningsläge
+                        if (window.currentWorkMode === 'cleanup') {
+                            cleanupModeHtml = `
+                                <div class="md:hidden mt-3 pt-3 border-t border-gray-800/50 flex justify-between items-center">
+                                    <div class="flex flex-wrap gap-1">
+                                        ${badges.join('')}
+                                    </div>
+                                    <button onclick="event.stopPropagation(); window.openEditModal('${movie.id}');" class="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-bold shrink-0">
+                                        <i data-lucide="edit-3" class="w-3 h-3"></i> Ändra
+                                    </button>
                                 </div>
-                                <button onclick="event.stopPropagation(); window.openEditModal('${movie.id}');" class="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1 text-[10px] font-bold shrink-0">
-                                    <i data-lucide="edit-3" class="w-3 h-3"></i> Ändra
-                                </button>
+                            `;
+                        }
+                        // Desktop: alltid synligt, inget läge behövs
+                        cleanupBadgesDesktopHtml = `
+                            <div class="hidden md:flex mt-2 pt-2 border-t border-gray-800/50 flex-wrap gap-1 items-center">
+                                ${badges.join('')}
                             </div>
                         `;
                     }
@@ -3361,8 +3485,8 @@
                 let sellBtnHtml = '';
                 if (!sold) {
                     if (window.currentWorkMode === 'standard') {
-                        if (isSelected) sellBtnHtml = `<button onclick="event.stopPropagation(); window.toggleMovieSelection('${movie.id}')" class="bg-emerald-600 text-white p-2.5 rounded-xl transition-colors shadow-lg border border-emerald-500" title="Ta bort från markering"><i data-lucide="check" class="w-4 h-4"></i></button>`;
-                        else sellBtnHtml = `<button onclick="event.stopPropagation(); window.toggleMovieSelection('${movie.id}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 p-2.5 rounded-xl transition-colors border border-emerald-500/20 shadow-sm" title="Markera för att sälja"><i data-lucide="tag" class="w-4 h-4"></i></button>`;
+                        if (isSelectedSell) sellBtnHtml = `<button onclick="event.stopPropagation(); window.toggleSellMarking('${movie.id}')" class="bg-emerald-600 text-white p-2.5 rounded-xl transition-colors shadow-lg border border-emerald-500" title="Ta bort från markering"><i data-lucide="check" class="w-4 h-4"></i></button>`;
+                        else sellBtnHtml = `<button onclick="event.stopPropagation(); window.toggleSellMarking('${movie.id}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 p-2.5 rounded-xl transition-colors border border-emerald-500/20 shadow-sm" title="Markera för att sälja"><i data-lucide="tag" class="w-4 h-4"></i></button>`;
                     } else if (window.currentWorkMode === 'package_build') {
                         if (isSelected) sellBtnHtml = `<button onclick="event.stopPropagation(); window.toggleMovieSelection('${movie.id}')" class="bg-purple-600 text-white p-2.5 rounded-xl transition-colors shadow-lg border border-purple-500"><i data-lucide="check" class="w-4 h-4"></i></button>`;
                         else sellBtnHtml = `<button onclick="event.stopPropagation(); window.toggleMovieSelection('${movie.id}')" class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 p-2.5 rounded-xl transition-colors border border-purple-500/20 shadow-sm" title="Markera för paket"><i data-lucide="plus" class="w-4 h-4"></i></button>`;
@@ -3372,7 +3496,8 @@
                     sellBtnHtml = '<i data-lucide="chevron-right" class="text-gray-600"></i>';
                 }
 
-                let activeRingClass = isSelected ? (window.currentWorkMode === 'package_build' ? 'ring-1 ring-purple-500/50 bg-purple-900/10' : (window.currentWorkMode === 'sort' ? 'ring-1 ring-amber-500/50 bg-amber-900/10' : 'ring-1 ring-emerald-500/50 bg-emerald-900/10')) : '';
+                let activeRingClass = isSelected ? (window.currentWorkMode === 'package_build' ? 'ring-1 ring-purple-500/50 bg-purple-900/10' : (window.currentWorkMode === 'sort' ? 'ring-1 ring-amber-500/50 bg-amber-900/10' : 'ring-1 ring-blue-500/50 bg-blue-900/10')) : '';
+                if (isSelectedSell) activeRingClass = 'ring-1 ring-emerald-500/50 bg-emerald-900/10';
 
                 const card = document.createElement('div');
                 card.className = `bg-gray-900 rounded-2xl p-3 border border-gray-800 flex gap-4 cursor-pointer transition-all hover:bg-gray-800/80 relative ${activeRingClass}`;
@@ -3391,13 +3516,17 @@
                                 ${badgeHTML}
                             </div>
                         </div>
-                        <div class="text-sm text-gray-400 flex items-center gap-1.5 font-medium">${priceSection}</div>
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="text-sm text-gray-400 flex items-center gap-1.5 font-medium shrink-0">${priceSection}</div>
+                            ${desktopActionsHtml}
+                        </div>
                         ${adModeHtml}
                         ${sortModeHtml}
                         ${cleanupModeHtml}
                         ${traderaFilterModeHtml}
+                        ${cleanupBadgesDesktopHtml}
                     </div>
-                    <div class="flex items-center justify-center shrink-0 pl-1">
+                    <div class="md:hidden flex items-center justify-center shrink-0 pl-1">
                         ${sellBtnHtml}
                     </div>
                 `;
@@ -3804,6 +3933,42 @@
      const getChecked = (cls) => Array.from(document.querySelectorAll('.' + cls + ':checked')).map(cb => cb.value);
         const setChecked = (cls, arr) => document.querySelectorAll('.' + cls).forEach(cb => cb.checked = arr.includes(cb.value));
 
+        // Snabbfilter i headern (bredare skärmar) - styr exakt samma
+        // filter-tillstånd som den fullständiga filtermodalen, men tillåter
+        // flerval via en liten kryssrutepanel istället för en vanlig <select>.
+        const quickFilterDefaultLabels = { media: 'Alla format', genre: 'Alla genrer', decade: 'Alla år' };
+        function getQuickFilterArray(type) {
+            if (type === 'media') return currentFilterMediaFormat;
+            if (type === 'genre') return currentFilterGenre;
+            return currentFilterDecade;
+        }
+        window.toggleQuickFilterPanel = (type) => {
+            const panel = document.getElementById(`quick-filter-${type}-panel`);
+            const isHidden = panel.classList.contains('hidden');
+            ['media', 'genre', 'decade'].forEach(t => document.getElementById(`quick-filter-${t}-panel`).classList.add('hidden'));
+            if (isHidden) panel.classList.remove('hidden');
+        };
+        window.toggleQuickFilterValue = (type, value) => {
+            const arr = getQuickFilterArray(type);
+            const idx = arr.indexOf(value);
+            if (idx > -1) arr.splice(idx, 1);
+            else arr.push(value);
+            const btn = document.getElementById(`quick-filter-${type}-btn`);
+            if (arr.length === 0) btn.textContent = quickFilterDefaultLabels[type];
+            else if (arr.length === 1) btn.textContent = arr[0];
+            else btn.textContent = `${arr.length} valda`;
+            updateList();
+        };
+        document.addEventListener('click', (e) => {
+            ['media', 'genre', 'decade'].forEach(t => {
+                const panel = document.getElementById(`quick-filter-${t}-panel`);
+                const btn = document.getElementById(`quick-filter-${t}-btn`);
+                if (panel && !panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== btn) {
+                    panel.classList.add('hidden');
+                }
+            });
+        });
+
         window.openFilterModal = () => {
             document.getElementById('filter-status').value = currentFilterStatus;
             document.getElementById('filter-locked').value = currentFilterLocked;
@@ -3817,6 +3982,18 @@
 
         window.closeFilterModal = () => document.getElementById('filter-modal').classList.replace('flex', 'hidden');
 
+        function refreshQuickFilterButtons() {
+            ['media', 'genre', 'decade'].forEach(type => {
+                const arr = getQuickFilterArray(type);
+                const btn = document.getElementById(`quick-filter-${type}-btn`);
+                if (!btn) return;
+                if (arr.length === 0) btn.textContent = quickFilterDefaultLabels[type];
+                else if (arr.length === 1) btn.textContent = arr[0];
+                else btn.textContent = `${arr.length} valda`;
+                document.querySelectorAll('.quick-cb-' + type).forEach(cb => cb.checked = arr.includes(cb.value));
+            });
+        }
+
         window.applyFilters = () => {
             currentFilterStatus = document.getElementById('filter-status').value;
             currentFilterLocked = document.getElementById('filter-locked').value;
@@ -3825,6 +4002,7 @@
             currentFilterMediaFormat = getChecked('filter-cb-media');
             currentFilterGenre = getChecked('filter-cb-genre');
             currentFilterDecade = getChecked('filter-cb-decade');
+            refreshQuickFilterButtons();
             window.closeFilterModal();
             updateList();
             document.getElementById('movie-list').scrollTo({ top: 0, behavior: 'smooth' });
@@ -3851,7 +4029,9 @@
             
             const filterDefect = document.getElementById('filter-defect');
             if (filterDefect) filterDefect.value = 'all';
-            
+
+            refreshQuickFilterButtons();
+
             setChecked('filter-cb-format', []);
             setChecked('filter-cb-media', []);
             setChecked('filter-cb-genre', []);
@@ -4162,20 +4342,48 @@
         };
 
         window.toggleMovieSelection = (id) => { 
+            if (!selectedPackageIds.has(id) && selectedSellIds.size > 0 && window.matchMedia('(min-width: 768px)').matches) {
+                window.showToast("Du har redan markerat filmer för att sälja - avmarkera dem först", "error");
+                return;
+            }
             selectedPackageIds.has(id) ? selectedPackageIds.delete(id) : selectedPackageIds.add(id); 
             updatePackageFloatingBar(); 
             updateList(); 
         };
+
+        // Separat markering för "Sälj"-knappen på desktop (skiljd från paket-markeringen)
+        window.toggleSellMarking = (id) => {
+            if (!selectedSellIds.has(id) && selectedPackageIds.size > 0 && window.matchMedia('(min-width: 768px)').matches) {
+                window.showToast("Du har redan markerat filmer för paketbygge - avmarkera dem först", "error");
+                return;
+            }
+            selectedSellIds.has(id) ? selectedSellIds.delete(id) : selectedSellIds.add(id);
+            updatePackageFloatingBar();
+            updateList();
+        };
         
         function updatePackageFloatingBar() { 
             const count = selectedPackageIds.size;
+            const sellCount = selectedSellIds.size;
             const sellContainer = document.getElementById('sell-basket-container');
             const buildContainer = document.getElementById('package-build-container');
             const sortContainer = document.getElementById('sort-basket-container');
             const fab = document.getElementById('add-fab');
+
+            // Desktop: den nya, separata sälj-markeringen har alltid högst prioritet
+            if (sellCount > 0) {
+                if (buildContainer) { buildContainer.classList.add('hidden'); buildContainer.classList.remove('flex'); }
+                if (sortContainer) { sortContainer.classList.add('hidden'); sortContainer.classList.remove('flex'); }
+                if (sellContainer) { sellContainer.classList.remove('hidden'); sellContainer.classList.add('flex'); }
+                const countSpan = document.getElementById('sell-basket-count');
+                if (countSpan) countSpan.textContent = sellCount;
+                if (fab) fab.classList.add('hidden');
+                return;
+            }
             
             if (count > 0) {
-                if (window.currentWorkMode === 'package_build') {
+                const isDesktopWidth = window.matchMedia('(min-width: 768px)').matches;
+                if (window.currentWorkMode === 'package_build' || (isDesktopWidth && window.currentWorkMode !== 'sort')) {
                     if (sellContainer) { sellContainer.classList.add('hidden'); sellContainer.classList.remove('flex'); }
                     if (sortContainer) { sortContainer.classList.add('hidden'); sortContainer.classList.remove('flex'); }
                     if (buildContainer) { buildContainer.classList.remove('hidden'); buildContainer.classList.add('flex'); }
@@ -4206,16 +4414,19 @@
 
         window.clearSellBasket = () => {
             selectedPackageIds.clear();
+            selectedSellIds.clear();
             updatePackageFloatingBar();
             updateList();
         };
 
         window.proceedToSell = () => {
-            if (selectedPackageIds.size === 1) {
+            // Desktop: den nya, separata sälj-markeringen har prioritet om den har innehåll
+            const activeSet = selectedSellIds.size > 0 ? selectedSellIds : selectedPackageIds;
+            if (activeSet.size === 1) {
                 // Sälj enstaka
-                const id = Array.from(selectedPackageIds)[0];
+                const id = Array.from(activeSet)[0];
                 window.initiateSale(id, true);
-            } else if (selectedPackageIds.size > 1) {
+            } else if (activeSet.size > 1) {
                 // Sälj paket
                 window.openPackageModal();
             }
@@ -4276,6 +4487,10 @@
                 document.getElementById('tools-view').classList.replace('hidden', 'flex');
                 lucide.createIcons();
             }
+
+            // Den flytande plus-knappen ska bara synas på startskärmen (Lager)
+            const fab = document.getElementById('add-fab');
+            if (fab) fab.classList.toggle('hidden', tab !== 'home');
         };
         
         let bestMovieIdGlobal = null;
@@ -6321,17 +6536,18 @@ window.renderMonthlyStats = (year) => {
         // ==========================================
 
         window.openPackageModal = () => {
-            const selected = movies.filter(m => selectedPackageIds.has(m.id));
-            const collage = document.getElementById('package-poster-collage');
-            collage.innerHTML = selected.slice(0, 5).map((m, i) => `<img src="${m.tmdbPoster || m.poster || window.FALLBACK_IMG}" onerror="this.onerror=null; this.src=window.FALLBACK_IMG" class="w-16 h-24 object-cover rounded-xl border-2 border-gray-900 shadow-lg" style="z-index:${50-i}">`).join('');
-            
+            const activeSellSet = selectedSellIds.size > 0 ? selectedSellIds : selectedPackageIds;
+            const selected = movies.filter(m => activeSellSet.has(m.id));
+
             const container = document.getElementById('package-movies-container');
             container.innerHTML = selected.map(m => {
                 const pPrice = getExactData(m, 'KÖPT FÖR') || 0;
+                const posterSrc = m.tmdbPoster || m.poster || window.FALLBACK_IMG;
 
                 return `
                 <div class="flex flex-col border-b border-gray-800/50 pb-3 last:border-0 last:pb-0">
                     <div class="flex justify-between items-start gap-2">
+                        <img src="${posterSrc}" onerror="this.onerror=null; this.src=window.FALLBACK_IMG" class="w-9 h-14 object-cover rounded-md shrink-0" alt="">
                         <div class="flex flex-col flex-1 truncate pr-2">
                             <span class="text-sm text-gray-300 truncate">${escapeHtml(getExactData(m, 'FILMER') || 'Okänd titel')}</span>
                             <span class="text-[10px] text-gray-500 mt-0.5">Inköpspris: ${pPrice} kr</span>
@@ -6347,6 +6563,24 @@ window.renderMonthlyStats = (year) => {
                     </div>
                 </div>
             `}).join('');
+
+            const indHeader = document.getElementById('pkg-individual-header');
+            if (indHeader) indHeader.textContent = `Individuella priser (${selected.length} filmer)`;
+
+            // Enkel filmlista för bunta ihop-läget (bara affisch+titel)
+            const bundleList = document.getElementById('pkg-bundle-movielist');
+            if (bundleList) {
+                bundleList.innerHTML = selected.map(m => {
+                    const posterSrc = m.tmdbPoster || m.poster || window.FALLBACK_IMG;
+                    return `
+                    <div class="flex items-center gap-2.5">
+                        <img src="${posterSrc}" onerror="this.onerror=null; this.src=window.FALLBACK_IMG" class="w-7 h-11 object-cover rounded shrink-0" alt="">
+                        <span class="text-sm text-gray-300 truncate">${escapeHtml(getExactData(m, 'FILMER') || 'Okänd titel')}</span>
+                    </div>
+                `}).join('');
+            }
+            const bundleHeader = document.getElementById('pkg-bundle-header');
+            if (bundleHeader) bundleHeader.textContent = `Filmer i paketet (${selected.length} filmer)`;
             
             // RESET MODAL STATE
             document.getElementById('pkg-is-single-ad').checked = false;
@@ -6372,10 +6606,13 @@ window.renderMonthlyStats = (year) => {
             const isSingle = document.getElementById('pkg-is-single-ad').checked;
             const singleContainer = document.getElementById('pkg-single-ad-container');
             const indContainer = document.getElementById('pkg-individual-container');
+            const bundleListContainer = document.getElementById('pkg-bundle-list-container');
+            const isDesktopWidthNow = window.matchMedia('(min-width: 768px)').matches;
             
             if (isSingle) {
                 singleContainer.classList.remove('hidden');
-                indContainer.classList.add('hidden');
+                indContainer.style.display = 'none';
+                if (bundleListContainer) bundleListContainer.style.display = '';
                 
                 // Om användaren redan skrivit in styckpriser, fyll i totalen automatiskt
                 let sum = 0;
@@ -6385,9 +6622,69 @@ window.renderMonthlyStats = (year) => {
                 }
             } else {
                 singleContainer.classList.add('hidden');
-                indContainer.classList.remove('hidden');
+                indContainer.style.display = '';
+                if (bundleListContainer) bundleListContainer.style.display = 'none';
             }
+
+            if (isDesktopWidthNow) {
+                window.restorePackageModalDesktopColumns();
+            } else {
+                window.reorderPackageModalForMobile();
+            }
+
             window.updatePackageCalculation();
+        };
+
+        window.reorderPackageModalForMobile = () => {
+            const topAnchor = document.getElementById('pkg-mobile-top-anchor');
+            const buntingBox = document.getElementById('pkg-bunting-box');
+            const indContainer = document.getElementById('pkg-individual-container');
+            const bundleListContainer = document.getElementById('pkg-bundle-list-container');
+            const fieldsBlock = document.getElementById('pkg-fields-block');
+            const kalkylBox = document.getElementById('pkg-kalkyl-box');
+            const btn = document.getElementById('confirm-package-btn');
+            if (!topAnchor || !buntingBox || !indContainer || !bundleListContainer || !fieldsBlock || !kalkylBox || !btn) return;
+
+            let last = topAnchor;
+            [buntingBox, indContainer, bundleListContainer, fieldsBlock, kalkylBox, btn].forEach(el => {
+                last.after(el);
+                last = el;
+            });
+        };
+
+        window.restorePackageModalDesktopColumns = () => {
+            const anchorLeft = document.getElementById('pkg-desktop-anchor-left');
+            const anchorRight = document.getElementById('pkg-desktop-anchor-right');
+            const anchorKalkyl = document.getElementById('pkg-desktop-anchor-kalkyl');
+            const indContainer = document.getElementById('pkg-individual-container');
+            const bundleListContainer = document.getElementById('pkg-bundle-list-container');
+            const kalkylBox = document.getElementById('pkg-kalkyl-box');
+            const buntingBox = document.getElementById('pkg-bunting-box');
+            const fieldsBlock = document.getElementById('pkg-fields-block');
+            const btnAnchorRight = document.getElementById('pkg-btn-anchor-right');
+            const btn = document.getElementById('confirm-package-btn');
+            if (!anchorLeft || !anchorRight || !anchorKalkyl || !indContainer || !bundleListContainer || !kalkylBox || !buntingBox || !fieldsBlock || !btnAnchorRight || !btn) return;
+
+            // Kolumn 1: filmer (affischer/priser)
+            let left = anchorLeft;
+            [indContainer, bundleListContainer].forEach(el => {
+                left.after(el);
+                left = el;
+            });
+
+            // Kolumn 2: buntningsruta, fält
+            let mid = anchorRight;
+            [buntingBox, fieldsBlock].forEach(el => {
+                mid.after(el);
+                mid = el;
+            });
+
+            // Kolumn 3: kalkyl, knapp
+            let right = anchorKalkyl;
+            [kalkylBox, btnAnchorRight, btn].forEach(el => {
+                right.after(el);
+                right = el;
+            });
         };
 
         window.autoDistributePackagePrice = () => {
@@ -6612,6 +6909,7 @@ window.renderMonthlyStats = (year) => {
                 if (packType) window.decrementPackagingStock(packType, 1);
                 window.closePackageModal();
                 selectedPackageIds.clear();
+                selectedSellIds.clear();
                 updatePackageFloatingBar();
                 updateList();
                 
@@ -6632,6 +6930,7 @@ window.renderMonthlyStats = (year) => {
             if (m.paketId && !isMovieSold(m)) {
                 window.closeDetails();
                 selectedPackageIds.clear();
+                selectedSellIds.clear();
                 movies.forEach(peer => {
                     if (peer.paketId === m.paketId) selectedPackageIds.add(peer.id);
                 });
@@ -6647,6 +6946,19 @@ window.renderMonthlyStats = (year) => {
             }
             currentSellMovieId = id; 
             currentPurchasePrice = parseFloat(getExactData(m, 'KÖPT FÖR') || 0);
+
+            // Kalkyl-boxen sitter under affischen på desktop (egen kolumn),
+            // men under datafälten på mobil (som innan) - flytta den till
+            // rätt plats beroende på skärmbredd varje gång rutan öppnas.
+            const calcBox = document.getElementById('sell-calc-box');
+            const anchorDesktop = document.getElementById('sell-calc-anchor-desktop');
+            const anchorMobile = document.getElementById('sell-calc-anchor-mobile');
+            if (calcBox && anchorDesktop && anchorMobile) {
+                const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+                if (isDesktop) anchorDesktop.after(calcBox);
+                else anchorMobile.after(calcBox);
+            }
+
             document.getElementById('sell-poster').src = m.tmdbPoster || m.poster || window.FALLBACK_IMG;
             document.getElementById('sell-title').textContent = getExactData(m, 'FILMER') || 'Okänd';
             let year = getExactData(m, 'ÅR');
@@ -7077,6 +7389,10 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             if (!m) return;
             const title = getExactData(m, 'FILMER');
             const norm = String(title || '').trim().toLowerCase();
+            const format = document.getElementById('publish-category').selectedOptions[0].text;
+
+            // Öppna direkt en sökning på Tradera bland sålda annonser
+            window.checkTraderaValue(title, format);
 
             const previousSales = movies.filter(x =>
                 x.id !== m.id &&
@@ -7085,11 +7401,11 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             );
 
             const box = document.getElementById('publish-price-history');
-            box.classList.remove('hidden');
             if (previousSales.length === 0) {
-                box.innerHTML = `<span class="text-gray-500">Du har inte sålt den här titeln tidigare. Marknadsbred priskoll är inte klar än - kolla gärna på <a href="#" onclick="window.checkTraderaValue('${escapeJsAttr(title)}', document.getElementById('publish-category').selectedOptions[0].text); return false;" class="text-blue-400 underline">tradera.com</a> för att jämföra.</span>`;
+                box.classList.add('hidden');
                 return;
             }
+            box.classList.remove('hidden');
             const prices = previousSales.map(x => parseFloat(String(getExactData(x, 'SÅLT FÖR') || '0').replace(',', '.')) || 0).filter(p => p > 0);
             const list = prices.map(p => `${p} kr`).join(', ');
             box.innerHTML = `<span class="text-emerald-400 font-bold">Du har sålt den här titeln förut för: ${list}</span>`;
@@ -7610,6 +7926,13 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
             document.body.removeChild(textArea);
         }
 
+        window.togglePackageInfoList = (headerEl) => {
+            const list = headerEl.nextElementSibling;
+            const chevron = headerEl.querySelector('[data-lucide="chevron-down"]');
+            list.classList.toggle('hidden');
+            if (chevron) chevron.style.transform = list.classList.contains('hidden') ? '' : 'rotate(180deg)';
+        };
+
         window.openPeerDetail = (id) => {
             detailHistoryStack.push(currentDetailMovieId);
             window.openDetails(id, cameFromStats);
@@ -7631,6 +7954,10 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                 } else {
                     cameFromStats = false; 
                 }
+
+                // Dölj plus-knappen när detaljvyn öppnas - bara synlig på startskärmen
+                const fab = document.getElementById('add-fab');
+                if (fab) fab.classList.add('hidden');
 
                 currentDetailMovieId = id; 
                 const m = movies.find(x => x.id === id);
@@ -7850,12 +8177,12 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
                             const boxName = boxIndex > 0 ? `Låda #${boxIndex}` : `Låda (ID: ${bId})`;
 
                             bulkInfoHtml = `
-                                <div onclick="window.viewBulkBox(${bId})" class="mt-4 mb-2 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-purple-500/20 transition-colors">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="boxes" class="w-4 h-4 text-purple-400"></i>
-                                        <span class="text-sm font-bold text-purple-300">Köpt som del av ${boxName}</span>
+                                <div onclick="window.viewBulkBox(${bId})" class="mt-4 mb-4 bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-purple-500/20 transition-colors">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <i data-lucide="boxes" class="w-4 h-4 text-purple-400 shrink-0"></i>
+                                        <span class="text-sm font-bold text-purple-300 whitespace-nowrap">Köpt som del av ${boxName}</span>
                                     </div>
-                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400"></i>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400 shrink-0"></i>
                                 </div>
                             `;
                         }
@@ -7902,11 +8229,14 @@ Jag tar en kostnad för emballage på 3 kronor på alla annonser. De är inräkn
 
                                 packageInfoHtml = `
                                     <div class="mt-5 mb-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 shadow-inner">
-                                        <div class="flex items-center gap-2 mb-2 border-b border-emerald-500/20 pb-2">
-                                            <i data-lucide="package" class="w-5 h-5 text-emerald-400"></i>
-                                            <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Såld i paket (Order #${orderId})</span>
+                                        <div onclick="window.togglePackageInfoList(this)" class="flex items-center justify-between gap-2 cursor-pointer">
+                                            <div class="flex items-center gap-2">
+                                                <i data-lucide="package" class="w-5 h-5 text-emerald-400"></i>
+                                                <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Såld i paket (Order #${orderId})</span>
+                                            </div>
+                                            <span class="text-xs text-emerald-300 flex items-center gap-1 shrink-0">${peers.length} film${peers.length === 1 ? '' : 'er'} <i data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i></span>
                                         </div>
-                                        <div class="space-y-1">
+                                        <div class="hidden space-y-1 mt-2 pt-2 border-t border-emerald-500/20 max-h-48 overflow-y-auto pr-1">
                                             ${peerListHtml}
                                         </div>
                                     </div>
@@ -8006,11 +8336,20 @@ const verkligtEmballage = hasShipping ? (packCost + dynamicFee) : packCost; // V
                                 <div><span class="text-gray-500 text-xs block mb-0.5">Nettomarginal</span><span id="calc-margin" class="text-gray-300 font-bold">${marg.toFixed(2)}%</span></div>
                                 <div class="text-right"><span class="text-gray-500 text-xs block mb-0.5">Nettovinst</span><span id="calc-profit" class="font-black text-2xl ${p >= 0 ? 'text-emerald-400' : 'text-red-400'}">${p > 0 ? '+' : ''}${p.toFixed(2)} kr</span></div>
                             </div>
-                            ${locHtml}
-                            ${bulkInfoHtml}
-                            ${packageInfoHtml}
+                            <div class="md:hidden">
+                                ${locHtml}
+                                ${bulkInfoHtml}
+                                ${packageInfoHtml}
+                            </div>
+                            <div class="hidden md:block mt-3">
+                                ${packageInfoHtml}
+                            </div>
                         `;
+                        const extraInfoEl = document.getElementById('detail-extra-info');
+                        if (extraInfoEl) extraInfoEl.innerHTML = `${locHtml}${bulkInfoHtml}`;
                     } else {
+                        const extraInfoEl = document.getElementById('detail-extra-info');
+                        if (extraInfoEl) extraInfoEl.innerHTML = '';
                         fin.innerHTML = `
                             <div class="flex justify-between items-center mb-4">
                                 <span class="text-sm text-gray-400">Inköpspris:</span>
@@ -8027,11 +8366,11 @@ const verkligtEmballage = hasShipping ? (packCost + dynamicFee) : packCost; // V
                             </div>
                             ` : ''}
                             ${(!isAnnons && !sold) ? `
-                            <button onclick="window.openPublishModal('${m.id}')" class="w-full bg-purple-600 hover:bg-purple-500 text-white transition-colors font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 mb-4 shadow-lg">
+                            <button onclick="window.openPublishModal('${m.id}')" class="w-full bg-purple-600 hover:bg-purple-500 text-white transition-colors font-bold text-sm py-3.5 rounded-xl flex justify-center items-center gap-2 mb-4 shadow-lg">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Publicera på Tradera
                             </button>
                             ` : ''}
-                            <button onclick="window.initiateSale('${m.id}')" class="w-full ${isAnnons ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'} transition-colors font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 mt-2">
+                            <button onclick="window.initiateSale('${m.id}')" class="w-full ${isAnnons ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'} transition-colors font-bold text-sm py-3.5 rounded-xl flex justify-center items-center gap-2 mt-2">
                                 <i data-lucide="tag" class="w-4 h-4"></i> ${isAnnons ? 'Markera som såld (Ligger ute på Tradera)' : 'Sälj direkt från lagret'}
                             </button>
                         `;
@@ -8077,6 +8416,10 @@ const verkligtEmballage = hasShipping ? (packCost + dynamicFee) : packCost; // V
                 mv.classList.remove('hidden');
                 mv.classList.add('flex');
                 cameFromMap = false;
+            } else {
+                // Tillbaka till startskärmen - visa plus-knappen igen
+                const fab = document.getElementById('add-fab');
+                if (fab) fab.classList.remove('hidden');
             }
         };
 
@@ -9627,13 +9970,14 @@ window.populatePackagingDropdowns = () => {
                 }
             });
 
-            // Uppdatera lilla röda siffran
-            const badge = document.getElementById('pack-badge');
-            if (badge) {
-                badge.textContent = count;
-                if (count > 0) badge.classList.remove('hidden');
-                else badge.classList.add('hidden');
-            }
+            // Uppdatera lilla röda siffran (både mobil- och skrivbordsknappen)
+            [document.getElementById('pack-badge'), document.getElementById('pack-badge-desktop')].forEach(badge => {
+                if (badge) {
+                    badge.textContent = count;
+                    if (count > 0) badge.classList.remove('hidden');
+                    else badge.classList.add('hidden');
+                }
+            });
 
             if (count === 0) {
                 container.innerHTML = '<div class="text-center py-10 text-gray-500"><i data-lucide="check-circle" class="w-10 h-10 mx-auto mb-3 opacity-20"></i><p>Allt är packat och skickat!</p></div>';
@@ -9713,15 +10057,11 @@ window.populatePackagingDropdowns = () => {
 
         window.markOrderAsPacked = async (oId) => {
             let updates = 0;
-            let orderTitles = []; // Samla alla titlar i ordern
 
             movies.forEach(m => {
                 if (isMovieSold(m) && getExactData(m, 'SKICKAD') === false) {
                     const currentOid = getExactData(m, 'ORDER_ID') || ('no_id_' + m.id);
                     if (String(currentOid) === String(oId)) {
-                        // Spara titeln för att skicka till fraktsöket
-                        orderTitles.push(getExactData(m, 'FILMER') || '');
-                        
                         m['SKICKAD'] = true; // Uppdatera lokalt
                         m['HYLLPLATS'] = ''; // Töm hyllan lokalt
                         updateDoc(doc(moviesCollection, m.id), { 'SKICKAD': true, 'HYLLPLATS': '' }); // Uppdatera i databasen
@@ -9733,104 +10073,9 @@ window.populatePackagingDropdowns = () => {
             if (updates > 0) {
                 window.showToast("Ordern markerad som skickad!", "success");
                 window.renderPackList();
-                
-                // Om vi hittade några filmer, skicka ALLA deras titlar till fraktsöket!
-                if (orderTitles.length > 0) {
-                    window.checkShippingLabel(orderTitles);
-                }
             }
         };
 
-        // ==========================================
-        // FRAKTHANTERING (INSTABOX & PDF UTSKRIFT)
-        // ==========================================
-        window.checkShippingLabel = async (titlesArray) => {
-            try {
-                const labelsCol = collection(db, 'artifacts', appId, 'public', 'data', 'shipping_labels');
-                const snapshot = await getDocs(labelsCol);
-                
-                let foundDoc = null;
-                
-                snapshot.forEach(docSnap => {
-                    const docId = docSnap.id;
-                    const cleanDocId = docId.replace(/[^a-zA-Z0-9åäöÅÄÖ]/g, '').toLowerCase();
-                    
-                    titlesArray.forEach(title => {
-                        const cleanLocalTitle = title.replace(/[^a-zA-Z0-9åäöÅÄÖ]/g, '').toLowerCase();
-                        if (cleanLocalTitle && (cleanDocId.includes(cleanLocalTitle) || cleanLocalTitle.includes(cleanDocId))) {
-                            const candidate = { id: docId, ...docSnap.data() };
-                            // Om flera fraktsedlar matchar samma titel: äldsta vinner (FIFO)
-                            if (!foundDoc || (candidate.timestamp || 0) < (foundDoc.timestamp || 0)) {
-                                foundDoc = candidate;
-                            }
-                        }
-                    });
-                });
-                
-                if (foundDoc) {
-                    // 1. INSTABOX
-                    if (foundDoc.instaboxCode) {
-                        document.getElementById('instabox-code-display').textContent = foundDoc.instaboxCode;
-                        document.getElementById('instabox-modal').classList.remove('hidden');
-                        lucide.createIcons();
-                        
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shipping_labels', foundDoc.id));
-                    } 
-                    // 2. VANLIG FRAKTSEDEL (PDF UTSKRIFT)
-                    else if (foundDoc.pdfBase64) {
-                        window.showToast("Skapar fraktsedel för utskrift...", "success");
-                        
-                        const pdfDataUri = "data:application/pdf;base64," + foundDoc.pdfBase64;
-                        const existingPdfBytes = await fetch(pdfDataUri).then(res => res.arrayBuffer());
-                        
-                        const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-                        const pages = pdfDoc.getPages();
-                        
-                        if (pages.length > 0) {
-                            const firstPage = pages[0];
-                            
-                            // MATEMATIKEN FÖR DINA MÅTT:
-                            // 1 cm = ca 28.35 punkter (points) i en PDF
-                            // 10.5 cm bredd = ca 298 punkter. Vi sätter 305 för liten säkerhetsmarginal.
-                            // 19 cm höjd (DHL) = ca 538 punkter. Vi sätter 555 punkter (19.5 cm) för att garantera att hela kommer med.
-                            
-                            const cropWidth = 305;
-                            const cropHeight = 545;
-                            
-                            // A4 är normalt 842 punkter högt.
-                            // 842 - 555 = 287 punkter "över" när etiketten är borträknad.
-                            // Delat på två (för att centrera mellan övre och undre marginalen) = 143.5 punkter från botten.
-                            
-                            const cropX = 0; // Längst ut till vänster
-                            const cropY = 190 // Marginalen från botten
-
-                            // Tvinga webbläsaren att respektera storleken på ALLA sätt
-                            firstPage.setCropBox(cropX, cropY, cropWidth, cropHeight);
-                            firstPage.setMediaBox(cropX, cropY, cropWidth, cropHeight);
-                            
-                            // Sätt in saxen och klipp ut rutan
-                            firstPage.setCropBox(cropX, cropY, cropWidth, cropHeight);
-                            
-                            // Etiketten är upp och ner, så vi roterar den 180 grader (helt rättvänd)
-                            firstPage.setRotation(PDFLib.degrees(180));
-                            
-                            const pdfBytes = await pdfDoc.save();
-                            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                            const objectUrl = URL.createObjectURL(blob);
-                            
-                            // Öppna PDF:en i en ny flik istället för att tvinga fram utskrift
-                            window.open(objectUrl, '_blank');
-                            deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shipping_labels', foundDoc.id));
-                        }
-                    }
-                } else {
-                    console.log("Kunde inte matcha ordern mot någon väntande fraktsedel.");
-                }
-            } catch (error) {
-                console.error("Fel vid hantering av fraktsedel:", error);
-                window.showToast("Kunde inte skriva ut fraktsedeln.", "error");
-            }
-        };
         // ==========================================
         // ÖVRIGA UTGIFTER & KVITTON LOGIK
         // ==========================================
@@ -10316,19 +10561,6 @@ window.populatePackagingDropdowns = () => {
             }
         };
         // --- MANUELL PAKETBYGGARE ---
-        window.copyPackageAdText = () => {
-            const selected = movies.filter(m => selectedPackageIds.has(m.id));
-            if (selected.length === 0) return;
-            
-            const titles = selected.map(m => {
-                const t = getExactData(m, 'FILMER') || 'Okänd';
-                const y = getExactData(m, 'ÅR') || '';
-                return y ? `${t} (${y})` : t;
-            }).join(',\n- ');
-            
-            const text = `Detta är ett filmpaket med ${selected.length} st titlar.\n\nFilmerna som ingår är:\n- ${titles}`;
-            copyTextToClipboard(text, "Annonstext kopierad!");
-        };
 
         window.publishBuiltPackage = async () => {
             const count = selectedPackageIds.size;
@@ -11258,12 +11490,13 @@ window.removeWishlistItem = async (id, btnElement) => {
                 const restartBodyText = await restartRes.text();
                 let restartData = {};
                 try { restartData = restartBodyText ? JSON.parse(restartBodyText) : {}; } catch (e) { /* tomt eller ej-JSON svar */ }
+                console.log('Traderas svar vid omstart av annons:', restartData);
                 if (!restartRes.ok) {
                     throw new Error(traderaErrorMessage(restartData, 'HTTP ' + restartRes.status));
                 }
-                const newItemId = restartData.itemId || restartData.id || restartData.requestId;
+                const newItemId = restartData.itemId || restartData.id || restartData.requestId || restartData.newItemId || restartData.lastRestartedItemId || restartData.ItemId;
                 if (!newItemId) {
-                    throw new Error('Fick inget nytt annons-ID tillbaka från Tradera.');
+                    throw new Error('Fick inget nytt annons-ID tillbaka från Tradera. Svaret loggades i webbläsarens konsol (F12) - kolla där för att se exakt vad Tradera skickade.');
                 }
 
                 setRenewListingStatus('Omstart klar. Sätter nytt pris...', 'info');
@@ -11450,15 +11683,16 @@ window.removeWishlistItem = async (id, btnElement) => {
             onSnapshot(alertsCol, (snapshot) => {
                 const container = document.getElementById('alert-list-container');
                 const badge = document.getElementById('alert-badge');
+                const badgeDesktop = document.getElementById('alert-badge-desktop');
                 if(!container || !badge) return;
                 
                 const count = snapshot.docs.length;
-                badge.textContent = count;
-                if(count > 0) {
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
+                [badge, badgeDesktop].forEach(b => {
+                    if (!b) return;
+                    b.textContent = count;
+                    if(count > 0) b.classList.remove('hidden');
+                    else b.classList.add('hidden');
+                });
 
                 container.innerHTML = '';
                 if(count === 0) {
@@ -11536,7 +11770,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                         `;
                     } else if (data.type === 'tradera_auto_renewed') {
                         actionButtons = `
-                            <button onclick="window.closeAlertList(); if (currentFilterStatus !== 'tradera') window.toggleTraderaFilter(); window.dismissAlert(this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Visa filmen">
+                            <button onclick="window.closeAlertList(); window.dismissAlert(this.dataset.id); window.switchTab('home'); window.openDetails('${escapeHtml(data.movieId || '')}');" data-id="${escapeHtml(id)}" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Visa filmen">
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
                             <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
