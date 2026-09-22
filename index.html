@@ -11494,6 +11494,13 @@ window.removeWishlistItem = async (id, btnElement) => {
                 if (!restartRes.ok) {
                     throw new Error(traderaErrorMessage(restartData, 'HTTP ' + restartRes.status));
                 }
+                if (restartData.isSuccessful === false) {
+                    const reasons = {
+                        'Item has an itemorder': 'Annonsen har en aktiv order (någon har köpt filmen men inte betalat än) - Tradera tillåter inte omstart förrän ordern är avslutad eller avbruten.',
+                    };
+                    const reason = reasons[restartData.validationError] || restartData.validationError || 'Okänd anledning';
+                    throw new Error('Tradera vägrade starta om annonsen: ' + reason);
+                }
                 const newItemId = restartData.itemId || restartData.id || restartData.requestId || restartData.newItemId || restartData.lastRestartedItemId || restartData.ItemId;
                 if (!newItemId) {
                     throw new Error('Fick inget nytt annons-ID tillbaka från Tradera. Svaret loggades i webbläsarens konsol (F12) - kolla där för att se exakt vad Tradera skickade.');
@@ -11620,6 +11627,13 @@ window.removeWishlistItem = async (id, btnElement) => {
                             createdDate: match.order.createdDate,
                             timestamp: Date.now(),
                         });
+                        continue;
+                    }
+
+                    if (match && !isPaid) {
+                        // Det finns en order, men köparen har inte betalat än.
+                        // Ingen notis behövs för det här - bara viktigt att det
+                        // INTE felaktigt behandlas som en utgången annons.
                         continue;
                     }
 
