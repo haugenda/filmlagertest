@@ -28,6 +28,7 @@ const ALLOWED = [
 
   // --- Mina annonser / prisändring ---
   { method: "GET", pattern: /^\/items\/\d+\/restarts$/, needsUser: true },
+  { method: "GET", pattern: /^\/items\/\d+$/, needsUser: true },
   { method: "POST", pattern: /^\/listings\/items\/\d+\/restart$/, needsUser: true },
   { method: "PUT", pattern: /^\/listings\/items\/\d+\/price$/, needsUser: true },
   { method: "GET", pattern: /^\/listings\/items\/\d+$/, needsUser: true },

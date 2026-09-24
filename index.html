@@ -2309,6 +2309,29 @@
         </div>
     </div>
 
+    <!-- SAMFRAKT-VY: visar vilka filmer en köpare har köpt men inte betalat -->
+    <div id="samfrakt-modal" class="fixed inset-0 z-[125] hidden bg-black/80 backdrop-blur-sm p-0 sm:p-4 justify-center items-end sm:items-center">
+        <div class="bg-gray-900 w-full max-w-md md:max-w-3xl rounded-t-3xl sm:rounded-3xl border border-gray-800 shadow-2xl relative flex flex-col slide-up max-h-[90vh] overflow-hidden">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/90 backdrop-blur z-10 rounded-t-3xl shrink-0">
+                <h3 class="text-lg font-black text-white ml-2 flex items-center gap-2">
+                    <i data-lucide="package" class="w-5 h-5 text-blue-400"></i> Samfrakt
+                </h3>
+                <button onclick="window.closeSamfraktView()" class="text-gray-500 hover:text-white transition-colors bg-gray-800 p-2 rounded-full">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar" id="samfrakt-content">
+                <!-- Fylls av JS -->
+            </div>
+            <div class="p-4 border-t border-gray-800 bg-gray-900 shrink-0 flex gap-3">
+                <button onclick="window.closeSamfraktView()" class="w-1/3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-3.5 rounded-xl transition-colors text-sm">Stäng</button>
+                <button onclick="window.openSamfraktOnTradera()" class="w-2/3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg flex justify-center items-center gap-2 text-sm">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Sätt samfraktspris på Tradera
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- INSTABOX MODAL -->
     <div id="instabox-modal" class="fixed inset-0 z-[150] hidden bg-black/90 backdrop-blur-md flex justify-center items-center p-4">
         <div class="bg-gray-900 w-full max-w-sm rounded-3xl border border-gray-800 shadow-2xl p-6 text-center flex flex-col items-center slide-up">
@@ -11343,17 +11366,108 @@ window.removeWishlistItem = async (id, btnElement) => {
             const data = window._alertsCache ? window._alertsCache.get(alertId) : null;
             if (!data) return;
 
-            window._pendingTraderaSale = { orderId: data.orderId, shippingType: data.shippingType || '' };
-            window.initiateSale(data.movieId);
+            // Hämta ordern på nytt från Tradera, så vi får ALLA filmer i den
+            // och aktuella priser - fungerar även för notiser som skapades
+            // innan notisen började spara alla artiklar.
+            let order = null;
+            if (data.orderId) {
+                try {
+                    const res = await fetch(`/.netlify/functions/tradera?path=/orders/${data.orderId}`);
+                    if (res.ok) {
+                        const body = await res.json();
+                        order = Array.isArray(body) ? (body[0] || null) : body;
+                    }
+                } catch (e) { console.log('Kunde inte hämta ordern på nytt, använder notisens sparade uppgifter:', e); }
+            }
+
+            const orderItems = (order && Array.isArray(order.items) && order.items.length > 0)
+                ? order.items
+                : (Array.isArray(data.items) && data.items.length > 0 ? data.items : null);
+            const shippingCost = order && order.shippingCost !== undefined ? order.shippingCost : data.shippingCost;
+            const createdDate = (order && order.createdDate) || data.createdDate;
+            const zipCode = (order && order.shipTo && order.shipTo.zipCode) || data.zipCode || '';
+            const shippingType = (order && order.shippingType) || data.shippingType || '';
+
+            // Para ihop varje artikel i ordern med filmerna i lagret. En
+            // paketannons kan motsvara flera filmer med samma annons-ID.
+            const lines = [];       // { itemId, unitPrice, movies: [...] }
+            const unmatchedTitles = [];
+            if (orderItems) {
+                orderItems.forEach(it => {
+                    const found = movies.filter(m => m.traderaItemId && String(m.traderaItemId) === String(it.itemId) && !isMovieSold(m));
+                    if (found.length > 0) lines.push({ itemId: it.itemId, unitPrice: parseFloat(it.unitPrice) || 0, movies: found });
+                    else unmatchedTitles.push(it.title || ('annons ' + it.itemId));
+                });
+            }
+            const orderMovies = lines.flatMap(l => l.movies);
+
+            window._pendingTraderaSale = { orderId: data.orderId, shippingType };
+
+            // ---- Flera filmer: öppna flera-filmer-vyn med allt ifyllt ----
+            if (orderMovies.length > 1) {
+                selectedPackageIds.clear();
+                selectedSellIds.clear();
+                orderMovies.forEach(m => selectedSellIds.add(m.id));
+                updatePackageFloatingBar();
+                window.openPackageModal();
+
+                const isOneListing = lines.length === 1; // hela ordern är en enda paketannons
+                if (isOneListing) {
+                    // En annons med flera filmer - samma som "Såld som EN gemensam annons"
+                    document.getElementById('pkg-is-single-ad').checked = true;
+                    window.toggleSingleAdMode();
+                    document.getElementById('pkg-total-distribute').value = lines[0].unitPrice;
+                    window.autoDistributePackagePrice();
+                } else {
+                    // Separata annonser - varje film får sitt eget pris. Ligger
+                    // en paketannons med i ordern delas dess pris lika på filmerna.
+                    lines.forEach(l => {
+                        const count = l.movies.length;
+                        const perMovie = parseFloat((l.unitPrice / count).toFixed(2));
+                        l.movies.forEach((m, i) => {
+                            const input = document.querySelector(`.pkg-price-input[data-id="${m.id}"]`);
+                            if (!input) return;
+                            input.value = (i === count - 1) ? (l.unitPrice - perMovie * (count - 1)).toFixed(2) : perMovie;
+                        });
+                    });
+                    if (lines.some(l => l.movies.length > 1)) {
+                        window.showToast('Ordern innehåller en paketannons - kontrollera Tradera-avgiften innan du bekräftar', 'error');
+                    }
+                }
+
+                document.getElementById('pkg-sell-date').value = createdDate ? String(createdDate).slice(0, 10) : '';
+                document.getElementById('pkg-sell-shipping-paid').value = shippingCost ?? '';
+                window.updatePackageCalculation();
+                const pkgPostal = document.getElementById('pkg-sell-postal');
+                pkgPostal.value = zipCode;
+                await handlePostal({ target: pkgPostal }, 'pkg-sell-city', 'pkg-sell-municipality', 'pkg-postal-warning');
+
+                if (unmatchedTitles.length > 0) {
+                    window.showToast(`${unmatchedTitles.length} film(er) i ordern hittades inte i lagret: ${unmatchedTitles.join(', ')}`, 'error');
+                } else {
+                    window.showToast(`${orderMovies.length} filmer ifyllda från Tradera - välj emballage och bekräfta`, 'success');
+                }
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', alertId));
+                return;
+            }
+
+            // ---- En film: som tidigare ----
+            const singleMovie = orderMovies[0] || movies.find(m => m.id === data.movieId);
+            if (!singleMovie) {
+                window.showToast('Hittade inte filmen i lagret - den kan redan vara markerad som såld', 'error');
+                return;
+            }
+            const singlePrice = lines.length === 1 ? lines[0].unitPrice : data.unitPrice;
+            window.initiateSale(singleMovie.id);
 
             // initiateSale öppnar paket-flödet automatiskt om filmen har en
             // paketId - då finns inga sell-price/sell-date-fält att fylla i,
             // du fyller i paketets pris manuellt som vanligt.
             const priceInput = document.getElementById('sell-price');
             if (priceInput) {
-                priceInput.value = data.unitPrice || '';
-                document.getElementById('sell-shipping-paid').value = data.shippingCost || '';
-                document.getElementById('sell-date').value = data.createdDate ? String(data.createdDate).slice(0, 10) : '';
+                priceInput.value = singlePrice || '';
+                document.getElementById('sell-shipping-paid').value = shippingCost ?? '';
+                document.getElementById('sell-date').value = createdDate ? String(createdDate).slice(0, 10) : '';
 
                 // Sätta .value programmatiskt triggar inte input-lyssnare -
                 // kör därför uträkningen och postnummer-uppslagningen (som
@@ -11361,7 +11475,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                 // du skrivit in värdena själv.
                 window.updateSaleCalculation();
                 const postalInput = document.getElementById('sell-postal');
-                postalInput.value = data.zipCode || '';
+                postalInput.value = zipCode;
                 await handlePostal({ target: postalInput }, 'sell-city', 'sell-municipality', 'postal-warning');
 
                 window.showToast('Uppgifter ifyllda från Tradera - välj emballage och bekräfta', 'success');
@@ -11551,7 +11665,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                 localStorage.setItem('traderaIdCheckLastRun', String(Date.now()));
 
                 const items = await res.json();
-                const itemById = new Map((items || []).map(it => [it.id, it]));
+                const itemById = new Map((items || []).map(it => [String(it.id), it]));
                 const activeIds = new Set(itemById.keys());
 
                 const listedMovies = movies.filter(m =>
@@ -11563,7 +11677,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                 // Spara ner riktiga start- och slutdatum lokalt för sortering,
                 // som en biprodukt av hämtningen ovan - ingen extra Tradera-hämtning krävs.
                 for (const m of listedMovies) {
-                    const item = itemById.get(m.traderaItemId);
+                    const item = itemById.get(String(m.traderaItemId));
                     if (!item) continue;
                     const updates = {};
                     if (item.endDate) {
@@ -11579,33 +11693,46 @@ window.removeWishlistItem = async (id, btnElement) => {
                     }
                 }
 
-                const staleMovies = listedMovies.filter(m => !activeIds.has(m.traderaItemId));
+                const staleMovies = listedMovies.filter(m => !activeIds.has(String(m.traderaItemId)));
                 const staleMovieIds = new Set(staleMovies.map(m => m.id));
 
                 // Hämta ordrar en gång och slå upp varje stale film mot dem,
                 // istället för att anta "utgången" direkt - en försäljning ser
                 // likadan ut som en utgången annons tills vi kollat ordrarna.
+                // Nycklarna sparas som text, eftersom annons-ID:t kan vara
+                // sparat som tal på vissa filmer och som text på andra.
+                const STALE_CHECK_VERSION = '2026-09-23';
                 let orderByItemId = new Map();
+                let ordersFetchOk = false;
+                let orderCount = 0;
                 if (staleMovies.length > 0) {
                     try {
                         const oRes = await fetch('/.netlify/functions/tradera?path=/orders');
                         if (oRes.ok) {
                             const orders = await oRes.json();
+                            if (Array.isArray(orders)) {
+                                ordersFetchOk = true;
+                                orderCount = orders.length;
+                            }
+                            console.log(`[Stale-koll] /orders returnerade ${(orders || []).length} ordrar.`, (orders || []).map(o => ({ orderId: o.orderId, createdDate: o.createdDate, itemIds: (o.items||[]).map(i=>i.itemId) })));
                             (orders || []).forEach(order => {
                                 (order.items || []).forEach(item => {
-                                    orderByItemId.set(item.itemId, { order, item });
+                                    orderByItemId.set(String(item.itemId), { order, item });
                                 });
                             });
+                        } else {
+                            console.log('[Stale-koll] /orders svarade inte OK, status:', oRes.status);
                         }
-                    } catch (e) { /* strunta i, hanteras som "ej sålt" nedan */ }
+                    } catch (e) { console.log('[Stale-koll] /orders kastade fel:', e); }
                 }
 
                 const alertedOrderIds = new Set();
 
                 for (const m of staleMovies) {
                     const title = getExactData(m, 'FILMER') || 'Okänd titel';
-                    const match = orderByItemId.get(m.traderaItemId);
+                    const match = orderByItemId.get(String(m.traderaItemId));
                     const isPaid = match && Array.isArray(match.order.sellerOrderPayments) && match.order.sellerOrderPayments.length > 0;
+                    console.log(`[Stale-koll] "${title}" (traderaItemId: ${m.traderaItemId}) - order hittad: ${!!match}${match ? ', betald: ' + isPaid + ', orderId: ' + match.order.orderId : ''}`);
 
                     if (match && isPaid) {
                         // Det här är en försäljning, inte en utgången annons.
@@ -11625,6 +11752,7 @@ window.removeWishlistItem = async (id, btnElement) => {
                             zipCode: (match.order.shipTo && match.order.shipTo.zipCode) || '',
                             city: (match.order.shipTo && match.order.shipTo.city) || '',
                             createdDate: match.order.createdDate,
+                            items: (match.order.items || []).map(it => ({ itemId: it.itemId, unitPrice: it.unitPrice, title: it.title || '' })),
                             timestamp: Date.now(),
                         });
                         continue;
@@ -11634,7 +11762,30 @@ window.removeWishlistItem = async (id, btnElement) => {
                         // Det finns en order, men köparen har inte betalat än.
                         // Ingen notis behövs för det här - bara viktigt att det
                         // INTE felaktigt behandlas som en utgången annons.
+                        // Ta ALLTID bort en eventuell kvarvarande gammal
+                        // "gick ut"-notis för filmen, oavsett hur den råkat
+                        // hamna där.
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'paid_alerts', 'tradera_needs_renewal_' + m.id)).catch(() => {});
                         continue;
+                    }
+
+                    // Ingen order hittad. Men om själva hämtningen av ordrar
+                    // misslyckades vet vi ingenting säkert - då väntar vi till
+                    // nästa kontroll istället för att döma annonsen som utgången.
+                    if (!ordersFetchOk) {
+                        console.log(`[Stale-koll] Hoppar över "${title}" denna gång - ordrarna kunde inte hämtas.`);
+                        continue;
+                    }
+
+                    // Ingen order hittad alls - kolla föremålet direkt, det kan
+                    // finnas ett statusfält som visar "såld" innan någon order
+                    // hunnit skapas i Traderas system.
+                    try {
+                        const itemRes = await fetch(`/.netlify/functions/tradera?path=/items/${m.traderaItemId}`);
+                        const itemBody = await itemRes.text();
+                        console.log(`[Stale-koll] Inget order-match för "${title}" - direktkoll av /items/${m.traderaItemId} (status ${itemRes.status}):`, itemBody);
+                    } catch (e) {
+                        console.log(`[Stale-koll] Kunde inte hämta /items/${m.traderaItemId} direkt:`, e);
                     }
 
                     // Kolla om Tradera redan startat om annonsen automatiskt
@@ -11667,6 +11818,10 @@ window.removeWishlistItem = async (id, btnElement) => {
                             movieId: m.id,
                             oldItemId: m.traderaItemId,
                             timestamp: Date.now(),
+                            // Felsökning: saknas dessa fält skapades notisen av
+                            // en äldre version av appen (t.ex. på en annan enhet)
+                            skapadAvVersion: STALE_CHECK_VERSION,
+                            ordrarHamtade: orderCount,
                         });
                     }
                 }
@@ -11769,7 +11924,16 @@ window.removeWishlistItem = async (id, btnElement) => {
                             </button>
                     `;
 
-                    if (data.type === 'packaging_low') {
+                    if (data.type === 'shipping') {
+                        actionButtons = `
+                            <button onclick="window.closeAlertList(); window.openSamfraktView(this.dataset.id);" data-id="${escapeHtml(id)}" class="bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-xl transition-colors shadow" title="Visa filmerna">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.dismissAlert(this.dataset.id)" data-id="${escapeHtml(id)}" class="bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 p-2.5 rounded-xl transition-colors border border-gray-700" title="Ta bort">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                    } else if (data.type === 'packaging_low') {
                         // Ingen "öppna"-länk är relevant här - notisen försvinner
                         // ändå automatiskt så fort du fyller på lagret över
                         // gränsen igen. Den här knappen är bara för att slänga
@@ -11837,6 +12001,192 @@ window.removeWishlistItem = async (id, btnElement) => {
 
         window.closeAlertList = () => {
             document.getElementById('alert-list-modal').classList.replace('flex', 'hidden');
+        };
+
+        // ============================================================
+        // SAMFRAKT-VY
+        // Mejlet talar om NÄR köparen är klar (samfrakt-notisen), appen
+        // tar fram VILKA filmer det gäller genom att titta på köpta men
+        // ännu obetalda ordrar hos Tradera, grupperade per köpare.
+        // ============================================================
+        window._samfraktAlertId = null;
+
+        const samfraktContainsWord = (haystack, needle) => {
+            if (!haystack || !needle || String(needle).trim().length < 3) return false;
+            const escaped = String(needle).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}([^\\p{L}\\p{N}]|$)`, 'iu').test(haystack);
+        };
+
+        window.openSamfraktView = async (alertId) => {
+            window._samfraktAlertId = alertId || null;
+            const modal = document.getElementById('samfrakt-modal');
+            const content = document.getElementById('samfrakt-content');
+            const alertData = (window._alertsCache && alertId) ? window._alertsCache.get(alertId) : null;
+            const subject = alertData && alertData.subject ? String(alertData.subject) : '';
+
+            modal.classList.replace('hidden', 'flex');
+            content.innerHTML = `
+                <div class="text-center py-12 text-gray-400">
+                    <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-3 animate-spin text-blue-400"></i>
+                    <p class="text-sm">Hämtar köpta filmer från Tradera...</p>
+                </div>`;
+            lucide.createIcons();
+
+            let orders = [];
+            try {
+                const res = await fetch('/.netlify/functions/tradera?path=/orders');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                orders = await res.json() || [];
+            } catch (e) {
+                console.error('Samfrakt: kunde inte hämta ordrar', e);
+                content.innerHTML = `
+                    <div class="text-center py-12 text-red-400">
+                        <i data-lucide="wifi-off" class="w-8 h-8 mx-auto mb-3"></i>
+                        <p class="text-sm font-bold">Kunde inte hämta ordrarna från Tradera.</p>
+                        <p class="text-xs text-gray-500 mt-1">Försök igen om en stund.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            // Bara köpta men ännu obetalda ordrar är intressanta här
+            const unpaid = orders.filter(o => !(Array.isArray(o.sellerOrderPayments) && o.sellerOrderPayments.length > 0));
+
+            // Gruppera per köpare - en köpare kan ha flera separata ordrar
+            const groups = new Map();
+            unpaid.forEach(o => {
+                const b = o.buyer || {};
+                const key = String(b.userId || b.alias || o.orderId);
+                if (!groups.has(key)) groups.set(key, { buyer: b, orderIds: [], items: [] });
+                const g = groups.get(key);
+                g.orderIds.push(o.orderId);
+                (o.items || []).forEach(it => g.items.push(it));
+            });
+
+            // Para ihop varje Tradera-artikel med filmerna i lagret.
+            // En paketannons kan motsvara flera filmer med samma annons-ID.
+            const buildRows = (items) => {
+                const rows = [];
+                items.forEach(it => {
+                    const matched = movies.filter(m => m.traderaItemId && String(m.traderaItemId) === String(it.itemId));
+                    if (matched.length === 0) {
+                        rows.push({ unmatched: true, title: it.title || 'Okänd titel', shelf: '' });
+                    } else {
+                        matched.forEach(m => rows.push({
+                            unmatched: false,
+                            title: getExactData(m, 'FILMER') || it.title || 'Okänd titel',
+                            year: getExactData(m, 'ÅR') || '',
+                            format: getExactData(m, 'MEDIAFORMAT') || 'DVD',
+                            shelf: String(getExactData(m, 'HYLLPLATS') || '').trim(),
+                            poster: m.tmdbPoster || m.poster || window.FALLBACK_IMG,
+                        }));
+                    }
+                });
+                // Sortera efter hyllplats så det blir lätt att plocka - utan hylla sist
+                rows.sort((a, b) => {
+                    if (!a.shelf && b.shelf) return 1;
+                    if (a.shelf && !b.shelf) return -1;
+                    const s = a.shelf.localeCompare(b.shelf, 'sv', { numeric: true });
+                    return s !== 0 ? s : a.title.localeCompare(b.title, 'sv');
+                });
+                return rows;
+            };
+
+            // Matcha köparen mot namnet i notisens rubrik.
+            // Hela namnet, efternamnet eller användarnamnet räcker - bara
+            // förnamnet räcker inte (kan förväxlas med t.ex. ditt eget namn).
+            const isNotisBuyer = (b) => {
+                if (!subject) return false;
+                const fullName = [b.firstName, b.lastName].filter(Boolean).join(' ');
+                return samfraktContainsWord(subject, fullName) ||
+                       samfraktContainsWord(subject, b.lastName) ||
+                       samfraktContainsWord(subject, b.alias);
+            };
+
+            const allGroups = Array.from(groups.values());
+            const matchedGroups = allGroups.filter(g => isNotisBuyer(g.buyer));
+            // Övriga visas bara om de faktiskt har flera filmer (annars är det ingen samfrakt)
+            const otherGroups = allGroups.filter(g => !isNotisBuyer(g.buyer) && g.items.length > 1);
+
+            const renderGroup = (g, highlighted) => {
+                const b = g.buyer || {};
+                const name = [b.firstName, b.lastName].filter(Boolean).join(' ') || 'Okänd köpare';
+                const place = [b.city].filter(Boolean).join('');
+                const rows = buildRows(g.items);
+                const rowsHtml = rows.map(r => {
+                    if (r.unmatched) {
+                        return `
+                        <div class="flex items-center gap-3 bg-gray-950 border border-red-500/20 rounded-xl p-2.5">
+                            <div class="w-10 h-14 rounded-md bg-gray-800 flex items-center justify-center shrink-0"><i data-lucide="help-circle" class="w-5 h-5 text-gray-600"></i></div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold text-white truncate">${escapeHtml(r.title)}</p>
+                                <p class="text-[10px] text-red-400 font-bold mt-0.5">Hittades inte i lagret - leta manuellt</p>
+                            </div>
+                        </div>`;
+                    }
+                    const shelfHtml = r.shelf
+                        ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-lg text-xs font-black whitespace-nowrap">${escapeHtml(r.shelf)}</span>`
+                        : `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap">Ingen hylla</span>`;
+                    return `
+                        <div class="flex items-center gap-3 bg-gray-950 border border-gray-800 rounded-xl p-2.5">
+                            <img src="${escapeHtml(r.poster)}" onerror="this.onerror=null; this.src=window.FALLBACK_IMG" class="w-10 h-14 object-cover rounded-md shrink-0" alt="">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold text-white truncate">${escapeHtml(r.title)}${r.year ? ` <span class="text-gray-500 font-normal">(${escapeHtml(r.year)})</span>` : ''}</p>
+                                <span class="inline-block mt-1 bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border border-gray-700">${escapeHtml(r.format)}</span>
+                            </div>
+                            ${shelfHtml}
+                        </div>`;
+                }).join('');
+
+                return `
+                    <div class="${highlighted ? 'bg-blue-500/5 border-blue-500/30' : 'bg-gray-900 border-gray-800'} border rounded-2xl p-4">
+                        <div class="flex justify-between items-start gap-3 mb-3">
+                            <div class="min-w-0">
+                                <p class="font-black text-white truncate">${escapeHtml(name)}${b.alias ? ` <span class="text-gray-500 font-normal text-sm">(${escapeHtml(b.alias)})</span>` : ''}</p>
+                                <p class="text-xs text-gray-500">${place ? escapeHtml(place) + ' · ' : ''}${rows.length} film${rows.length === 1 ? '' : 'er'}</p>
+                            </div>
+                            ${highlighted ? '<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Från notisen</span>' : ''}
+                        </div>
+                        <div class="space-y-2 md:space-y-0 md:grid md:grid-cols-2 md:gap-2">${rowsHtml}</div>
+                    </div>`;
+            };
+
+            let html = '';
+            if (subject) {
+                html += `<p class="text-xs text-gray-500"><span class="font-bold text-gray-400">Notis:</span> ${escapeHtml(subject)}</p>`;
+            }
+            if (matchedGroups.length === 0 && otherGroups.length === 0) {
+                html += `
+                    <div class="text-center py-10 text-gray-400">
+                        <i data-lucide="package-check" class="w-8 h-8 mx-auto mb-3 opacity-40"></i>
+                        <p class="text-sm font-bold">Inga köpta-men-obetalda filmer just nu.</p>
+                        <p class="text-xs text-gray-500 mt-1">Köparen kan redan ha betalat, eller så har Tradera inte hunnit uppdatera än - försök igen om en stund.</p>
+                    </div>`;
+            } else {
+                if (matchedGroups.length === 0 && subject) {
+                    html += `<p class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">Kunde inte koppla notisen till en specifik köpare - här är alla som väntar på betalning.</p>`;
+                }
+                html += matchedGroups.map(g => renderGroup(g, true)).join('');
+                if (otherGroups.length > 0) {
+                    if (matchedGroups.length > 0) {
+                        html += `<h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2 pt-2">Övriga som väntar på betalning</h4>`;
+                    }
+                    html += otherGroups.map(g => renderGroup(g, false)).join('');
+                }
+            }
+            content.innerHTML = html;
+            lucide.createIcons();
+        };
+
+        window.closeSamfraktView = () => {
+            document.getElementById('samfrakt-modal').classList.replace('flex', 'hidden');
+        };
+
+        window.openSamfraktOnTradera = () => {
+            window.open('https://www.tradera.com/my/sold?tab=setCombinedShipping', '_blank');
+            if (window._samfraktAlertId) window.dismissAlert(window._samfraktAlertId);
+            window._samfraktAlertId = null;
+            window.closeSamfraktView();
         };
 
         window.openAlert = (url, id) => {
